@@ -1,8 +1,10 @@
 import configparser
 import os
 
-def conf_path():
-    # Path for pg_service.conf
+def conf_path() -> str:
+    """
+    Returns the path found for the pg_service.conf on the system as string.
+    """
     pg_config_path = None
     if os.environ.get("PGSERVICEFILE"):
         pg_config_path = os.environ.get("PGSERVICEFILE")
@@ -12,8 +14,10 @@ def conf_path():
         pg_config_path = "~/.pg_service.conf"
     return os.path.expanduser(pg_config_path)
  
-def full_config( conf_file_path = None ):
-    # Returns full pgservice config as ConfigParser()
+def full_config( conf_file_path: str = None ) -> configparser.ConfigParser:
+    """
+    Returns full pgservice config as configparser.ConfigParser().
+    """
     if conf_file_path is None:
         conf_file_path = conf_path()
 
@@ -22,16 +26,16 @@ def full_config( conf_file_path = None ):
         config.read(conf_file_path)
     return config
 
-def service_config(service_name, conf_file_path = None):
+def service_config(service_name: str, conf_file_path: str = None) -> dict:
     """
-    Returns a config object from a service name
+    Returns the config from the given service name as a dict.
     """
     config = full_config(conf_file_path)
-    return config[service_name]
+    return dict(config[service_name])
 
-def service_names(conf_file_path = None):
+def service_names(conf_file_path: str = None) -> list:
     """
-    Returns all service names as list
+    Returns all service names in a list.
     """
     config = full_config(conf_file_path)
     return config.sections()
