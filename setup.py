@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="pgserviceparser",
-    version="1.0.0",
+    version="1.0.1",
     author="Dave Signer",
     author_email="david@opengis.ch",
     description="A package parsing the PostgreSQL connection service file. ",
