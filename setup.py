@@ -19,7 +19,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    package_dir={"": "pgserviceparser"},
-    packages=setuptools.find_packages(where="pgserviceparser"),
+    packages=['pgserviceparser'],
     python_requires=">=3.6",
 )
