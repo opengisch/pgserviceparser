@@ -31,7 +31,7 @@ Optionally you can pass a config file path. Otherwise it gets it by `conf_path`.
 
 ## Getting the full configuration with `full_config`
 
-Returns full pgservice config as configparser.ConfigParser().
+Returns full pgservice config as [configparser.ConfigParser()](https://docs.python.org/3/library/configparser.html).
 Optionally you can pass a config file path. Otherwise it gets it by `conf_path`.
 ```
 >>> pgserviceparser.full_config()
