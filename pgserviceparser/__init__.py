@@ -31,7 +31,7 @@ def service_config(service_name: str, conf_file_path: str = None) -> dict:
     Returns the config from the given service name as a dict.
     """
     config = full_config(conf_file_path)
-    return dict(config[service_name])
+    return dict(config.get(service_name,{}))
 
 def service_names(conf_file_path: str = None) -> list:
     """
