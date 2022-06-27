@@ -34,6 +34,17 @@ def service_config(service_name: str, conf_file_path: str = None) -> dict:
     if service_name in config:
         return dict(config[service_name])
     return {}
+    
+def write_service_setting(service_name: str, setting_key: str, setting_value: str, conf_file_path: str = None) -> bool:
+    """
+    Returns true if it could write the setting to the file
+    """
+    config = full_config(conf_file_path)
+    if service_name in config:
+        config[service_name][setting_key]=setting_value
+        config.write(conf_file_path or conf_path)
+        return True
+    return False
 
 def service_names(conf_file_path: str = None) -> list:
     """
