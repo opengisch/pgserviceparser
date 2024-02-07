@@ -1,6 +1,6 @@
 import setuptools
 
-with open("README.md", "r", encoding="utf-8") as fh:
+with open("README.md", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
@@ -8,7 +8,7 @@ setuptools.setup(
     version="1.1.0",
     author="Dave Signer",
     author_email="david@opengis.ch",
-    description="A package parsing the PostgreSQL connection service file. ",
+    description="A package parsing the PostgreSQL connection service file.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/opengisch/pgserviceparser",
