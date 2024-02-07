@@ -1,5 +1,5 @@
 import configparser
-import os
+from os import getenv, path
 from typing import List, Optional
 
 
@@ -9,13 +9,13 @@ def conf_path() -> str:
     :return str: path to the pg_service.conf file as string
     """
     pg_config_path = None
-    if os.environ.get("PGSERVICEFILE"):
-        pg_config_path = os.environ.get("PGSERVICEFILE")
-    elif os.environ.get("PGSYSCONFDIR"):
-        pg_config_path = os.path.join(os.environ.get("PGSYSCONFDIR"), "pg_service.conf")
+    if getenv("PGSERVICEFILE"):
+        pg_config_path = getenv("PGSERVICEFILE")
+    elif getenv("PGSYSCONFDIR"):
+        pg_config_path = path.join(getenv("PGSYSCONFDIR"), "pg_service.conf")
     else:
         pg_config_path = "~/.pg_service.conf"
-    return os.path.expanduser(pg_config_path)
+    return path.expanduser(pg_config_path)
 
 
 def full_config(conf_file_path: Optional[str] = None) -> configparser.ConfigParser:
@@ -29,7 +29,7 @@ def full_config(conf_file_path: Optional[str] = None) -> configparser.ConfigPars
         conf_file_path = conf_path()
 
     config = configparser.ConfigParser()
-    if os.path.exists(conf_file_path):
+    if path.exists(conf_file_path):
         config.read(conf_file_path)
     return config
 
