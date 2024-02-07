@@ -3,6 +3,7 @@ import os
 from typing import List, Optional
 
 
+
 def conf_path() -> str:
     """Returns the path found for the pg_service.conf on the system as string.
 
@@ -16,7 +17,6 @@ def conf_path() -> str:
     else:
         pg_config_path = "~/.pg_service.conf"
     return os.path.expanduser(pg_config_path)
-
 
 def full_config(conf_file_path: Optional[str] = None) -> configparser.ConfigParser:
     """Returns full pgservice config as configparser.ConfigParser().
@@ -47,7 +47,6 @@ def service_config(service_name: str, conf_file_path: Optional[str] = None) -> d
         return dict(config[service_name])
     return {}
 
-
 def write_service_setting(
     service_name: str,
     setting_key: str,
@@ -60,7 +59,6 @@ def write_service_setting(
     :param str setting_key: key
     :param str setting_value: value
     :param str conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used, defaults to None
-
 
     :return bool: True if the setting has been successfully written
     """
