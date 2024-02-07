@@ -16,7 +16,6 @@ def conf_path() -> str:
         pg_config_path = "~/.pg_service.conf"
     return os.path.expanduser(pg_config_path)
 
-
 def full_config(conf_file_path: str = None) -> configparser.ConfigParser:
     """Returns full pgservice config as configparser.ConfigParser().
 
@@ -46,7 +45,6 @@ def service_config(service_name: str, conf_file_path: str = None) -> dict:
         return dict(config[service_name])
     return {}
 
-
 def write_service_setting(
     service_name: str, setting_key: str, setting_value: str, conf_file_path: str = None
 ) -> bool:
@@ -57,10 +55,8 @@ def write_service_setting(
     :param str setting_value: value
     :param str conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used, defaults to None
 
-
     :return bool: True if the setting has been successfully written
     """
-
     config = full_config(conf_file_path)
     if service_name in config:
         config[service_name][setting_key] = setting_value
