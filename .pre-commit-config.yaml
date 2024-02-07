@@ -1,0 +1,63 @@
+exclude: ".venv|__pycache__|tests/dev/|tests/fixtures/"
+fail_fast: false
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      - id: check-ast
+      - id: check-builtin-literals
+      - id: check-case-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: fix-byte-order-marker
+      - id: fix-encoding-pragma
+        args: [--remove]
+      - id: name-tests-test
+        args: [--pytest-test-first]
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.15.0
+    hooks:
+      - id: pyupgrade
+        args:
+          - "--py38-plus"
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "v0.1.9"
+    hooks:
+      - id: ruff
+        args:
+          - --fix-only
+          - --target-version=py38
+
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        args:
+          - --target-version=py38
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ["--profile", "black", "--filter-files"]
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        language: python
+        types: [python]
+        args:
+          - --select=E9,F63,F7,F82
+
+ci:
+  autofix_prs: true
+  autoupdate_schedule: quarterly
