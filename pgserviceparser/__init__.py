@@ -73,6 +73,28 @@ def write_service_setting(
     return False
 
 
+def write_service_settings(
+    service_name: str,
+    settings: dict,
+    conf_file_path: Optional[str] = None,
+) -> bool:
+    """Returns true if it could write the settings to the file.
+
+    :param str service_name: service's name
+    :param dict settings: settings dict defining the service config
+    :param str conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used, defaults to None
+
+    :return bool: True if the setting has been successfully written
+    """
+    config = full_config(conf_file_path)
+    if service_name in config:
+        config[service_name] = settings.copy()
+        with open(conf_file_path or conf_path(), "w") as configfile:
+            config.write(configfile)
+            return True
+    return False
+
+
 def service_names(conf_file_path: Optional[str] = None) -> List[str]:
     """Returns all service names in a list.
 
