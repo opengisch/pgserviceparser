@@ -1,4 +1,4 @@
-exclude: ".venv|__pycache__|tests/dev/|tests/fixtures/"
+exclude: ".venv|__pycache__|test/dev/|test/fixtures/"
 fail_fast: false
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks

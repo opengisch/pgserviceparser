@@ -1,0 +1,38 @@
+name: Run tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+  workflow_call:
+
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get source code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: "pip"
+          cache-dependency-path: "requirements*.txt"
+
+      - name: Install requirements
+        run: pip install -r requirements-test.txt
+
+      - name: Install pgserviceparser
+        run: python -m pip install -e .
+
+      - name: Run Python tests
+        env:
+            PGSERVICEPARSER_SRC_DIR: ${{ github.workspace }}
+        run: nose2 -v
