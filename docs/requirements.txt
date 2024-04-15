@@ -1,0 +1,3 @@
+mkdocstrings[python]
+mkdocs-material==9.5.17
+fancyboxmd==1.1.0

@@ -1,0 +1,14 @@
+site_name: pgserviceparser documentation
+
+theme:
+  name: "material"
+
+plugins:
+  - mkdocstrings
+
+markdown_extensions:
+  - admonition
+  - codehilite
+
+nav:
+  - Reference: index.md
