@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm", "wheel", "setuptools-git-versioning"]
+build-backend = "setuptools.build_meta"
+
+[project]
+requires-python = ">=3.9"
+name = "pgserviceparser"
+authors = [
+    {name = "David Signer", email = "info@opengis.ch"},
+    {name = "Julien Moura", email = "julien.moura@oslandia.com"},
+    {name = "Germán Carillo", email = "info@opengis.ch"},
+    {name = "Denis Rouzaud", email = "info@opengis.ch"},
+]
+description = "A package parsing the PostgreSQL connection service file"
+keywords =  ["postgres", "service"]
+classifiers = [
+    'Topic :: Database',
+    'Intended Audience :: System Administrators',
+    'Intended Audience :: Information Technology',
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+]
+license = { text = "MIT License" }
+dynamic = ["version", "readme"]
+
+[project.urls]
+homepage = "https://opengisch.github.io/pgserviceparser/"
+repository = "https://github.com/opengisch/pgserviceparser"
+tracker = "https://github.com/opengisch/pgserviceparser/issues"
+
+[tool.setuptools-git-versioning]
+enabled = true
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.md"], content-type = "text/markdown"}
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 120
