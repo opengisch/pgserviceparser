@@ -6,7 +6,8 @@ from typing import Optional
 def conf_path() -> str:
     """Returns the path found for the pg_service.conf on the system as string.
 
-    :return str: path to the pg_service.conf file as string
+    Returns:
+        path to the pg_service.conf file as string
     """
     pg_config_path = None
     if getenv("PGSERVICEFILE"):
@@ -21,9 +22,11 @@ def conf_path() -> str:
 def full_config(conf_file_path: Optional[str] = None) -> configparser.ConfigParser:
     """Returns full pgservice config as configparser.ConfigParser().
 
-    :param str conf_file_path: path to configuration file to load. If None the `conf_path` is used, defaults to None
+    Args:
+        conf_file_path: path to configuration file to load. If None the `conf_path` is used, defaults to None
 
-    :return configparser.ConfigParser: pg services loaded as ConfigParser
+    Returns:
+        pg services loaded as ConfigParser
     """
     if conf_file_path is None:
         conf_file_path = conf_path()
@@ -37,10 +40,12 @@ def full_config(conf_file_path: Optional[str] = None) -> configparser.ConfigPars
 def service_config(service_name: str, conf_file_path: Optional[str] = None) -> dict:
     """Returns the config from the given service name as a dict.
 
-    :param str service_name: service name
-    :param str conf_file_path: path to the pg_service.conf. If None the `conf_path` is used, defaults to None
+    Args:
+        service_name: service name
+        conf_file_path: path to the pg_service.conf. If None the `conf_path` is used, defaults to None
 
-    :return dict: service settings as dictionary
+    Returns:
+        service settings as dictionary
     """
     config = full_config(conf_file_path)
     if service_name in config:
@@ -56,12 +61,14 @@ def write_service_setting(
 ) -> bool:
     """Returns true if it could write the setting to the file.
 
-    :param str service_name: service's name
-    :param str setting_key: key
-    :param str setting_value: value
-    :param str conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used, defaults to None
+    Args:
+        service_name: service's name
+        setting_key: key
+        setting_value: value
+        conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used, defaults to None
 
-    :return bool: True if the setting has been successfully written
+    Returns:
+        True if the setting has been successfully written
     """
 
     config = full_config(conf_file_path)
@@ -80,11 +87,13 @@ def write_service(
 ) -> bool:
     """Returns true if it could write the settings to the file.
 
-    :param str service_name: service's name
-    :param dict settings: settings dict defining the service config
-    :param str conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used, defaults to None
+    Args:
+        service_name: service's name
+        settings: settings dict defining the service config
+        conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used, defaults to None
 
-    :return bool: True if the setting has been successfully written
+    Returns:
+        True if the setting has been successfully written
     """
     config = full_config(conf_file_path)
     if service_name in config:
@@ -98,8 +107,11 @@ def write_service(
 def service_names(conf_file_path: Optional[str] = None) -> list[str]:
     """Returns all service names in a list.
 
-    :param str conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used, defaults to None
-    :return list: list of every service registered
+    Args:
+        conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used, defaults to None
+
+    Returns:
+        list of every service registered
     """
     config = full_config(conf_file_path)
     return config.sections()
