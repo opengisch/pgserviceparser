@@ -1,6 +1,6 @@
 import configparser
 from os import getenv, path
-from typing import List, Optional
+from typing import Optional
 
 
 def conf_path() -> str:
@@ -95,7 +95,7 @@ def write_service(
     return False
 
 
-def service_names(conf_file_path: Optional[str] = None) -> List[str]:
+def service_names(conf_file_path: Optional[str] = None) -> list[str]:
     """Returns all service names in a list.
 
     :param str conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used, defaults to None
