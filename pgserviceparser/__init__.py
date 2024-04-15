@@ -34,9 +34,11 @@ def full_config(conf_file_path: Optional[Path] = None) -> configparser.ConfigPar
     """
     if conf_file_path is None:
         conf_file_path = conf_path()
+    else:
+        conf_file_path = Path(conf_file_path)
 
     if not conf_file_path.exists():
-        raise ServiceFileNotFound
+        raise ServiceFileNotFound(conf_file_path)
 
     config = configparser.ConfigParser()
     config.read(conf_file_path)

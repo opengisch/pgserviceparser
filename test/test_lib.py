@@ -5,8 +5,10 @@ import unittest
 from pathlib import Path
 
 from pgserviceparser import (
+    ServiceFileNotFound,
     ServiceNotFound,
     conf_path,
+    full_config,
     service_config,
     service_names,
     write_service,
@@ -19,13 +21,19 @@ PGSERVICEPARSER_SRC_PATH = Path(os.environ["PGSERVICEPARSER_SRC_DIR"])
 class TestLib(unittest.TestCase):
     def setUp(self):
         service_file_path_base = PGSERVICEPARSER_SRC_PATH / "test" / "data" / "service_base.txt"
-        service_file_path = PGSERVICEPARSER_SRC_PATH / "test" / "data" / "pgservice.conf"
-        os.environ["PGSERVICEFILE"] = str(service_file_path)
+        self.service_file_path = PGSERVICEPARSER_SRC_PATH / "test" / "data" / "pgservice.conf"
+        os.environ["PGSERVICEFILE"] = str(self.service_file_path)
 
-        shutil.copy(service_file_path_base, service_file_path)
+        shutil.copy(service_file_path_base, self.service_file_path)
 
     def test_conf_path(self):
         self.assertEqual(Path(os.environ["PGSERVICEFILE"]), conf_path())
+
+    def test_full_config(self):
+        self.assertIsNotNone(full_config())
+        self.assertIsNotNone(full_config(self.service_file_path))
+
+        self.assertRaises(ServiceFileNotFound, full_config, "non_existing_file")
 
     def test_service_names(self):
         self.assertEqual(service_names(), ["service_1", "service_2", "service_3"])
@@ -63,11 +71,3 @@ class TestLib(unittest.TestCase):
         config_2 = service_config("service_2")
         write_service("service_3", config_2)
         self.assertEqual(service_config("service_3"), config_2)
-
-    def tearDown(self):
-        # Get back to initial status
-        config = {"host": "host_1", "dbname": "db_1", "port": "1111", "user": "user_1", "password": "pwd_1"}
-        write_service("service_1", config)
-
-        config = {"host": "host_3", "dbname": "db_3", "port": "3333", "user": "user_3", "password": "pwd_3"}
-        write_service("service_3", config)
