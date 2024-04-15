@@ -73,7 +73,7 @@ def write_service_setting(
     return False
 
 
-def write_service_settings(
+def write_service(
     service_name: str,
     settings: dict,
     conf_file_path: Optional[str] = None,
