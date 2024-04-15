@@ -1,0 +1,62 @@
+name: "📚 Documentation Builder"
+
+on:
+  push:
+    branches: [main, docs]
+    paths:
+      - .github/workflows/docs_builder.yml
+      - pgserviceparser/**/*.py
+      - docs/**/*
+      - requirements/documentation.txt
+    tags:
+      - "*"
+
+  pull_request:
+    branches: [master]
+    paths:
+      - .github/workflows/docs_builder.yml
+      - pgserviceparser/**/*.py
+      - docs/**/*
+      - requirements/documentation.txt
+
+# Allow one concurrent deployment
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: docs
+
+jobs:
+  build-docs:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Get source code
+      uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install pgserviceparser
+      run: python -m pip install -e ..
+
+    - name: Install Python requirements (doocs)
+      run: pip install -r requirements.txt
+
+    - name: Build documentation
+      run: mkdocs build
+
+    - uses: actions/upload-artifact@v4
+      if: ${{ github.event_name == 'pull_request' }}
+      with:
+        name: docs
+        path: docs/site
+        if-no-files-found: error
+
+    - name: Deploy to GitHub Pages
+      if: contains(fromJSON('["push", "workflow_dispatch"]'), github.event_name)
+      run: mkdocs gh-deploy --force

@@ -1,4 +1,4 @@
-# Byte-compiled / optimized / DLL files
+docs/site
 __pycache__/
 .idea
 *.egg-info
