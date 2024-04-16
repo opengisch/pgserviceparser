@@ -8,7 +8,7 @@ name = "pgserviceparser"
 authors = [
     {name = "David Signer", email = "info@opengis.ch"},
     {name = "Julien Moura", email = "julien.moura@oslandia.com"},
-    {name = "Germán Carillo", email = "info@opengis.ch"},
+    {name = "Germán Carrillo", email = "info@opengis.ch"},
     {name = "Denis Rouzaud", email = "info@opengis.ch"},
 ]
 description = "A package parsing the PostgreSQL connection service file"
