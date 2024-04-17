@@ -34,6 +34,8 @@ jobs:
       - name: upload release asset
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
         run: gh release upload ${{ github.ref_name }} "dist/pgserviceparser-${{ github.ref_name }}.tar.gz"
 
       - name: Deploy to PyPI
