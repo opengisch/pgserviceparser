@@ -11,7 +11,7 @@ on:
   workflow_call:
 
 jobs:
-  tests:
+  build-wheel:
     runs-on: ubuntu-latest
     steps:
       - name: Get source code
