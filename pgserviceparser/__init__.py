@@ -91,7 +91,7 @@ def write_service_setting(
 
     config[service_name][setting_key] = setting_value
     with open(conf_file_path or conf_path(), "w") as configfile:
-        config.write(configfile)
+        config.write(configfile, space_around_delimiters=False)
 
 
 def write_service(
@@ -116,7 +116,7 @@ def write_service(
 
     config[service_name] = settings.copy()
     with open(conf_file_path or conf_path(), "w") as configfile:
-        config.write(configfile)
+        config.write(configfile, space_around_delimiters=False)
 
 
 def service_names(conf_file_path: Optional[str] = None) -> list[str]:
