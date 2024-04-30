@@ -55,10 +55,22 @@ class TestLib(unittest.TestCase):
         self.assertIn("new_key", conf)
         self.assertEqual(conf["new_key"], "new_value")
 
+        self.assertEqual(
+            open(self.service_file_path).read().find(" = "),
+            -1,
+            "Whitespaces between delimiters were found, but should not be present",
+        )
+
         # Overwrite setting
         write_service_setting("service_1", "port", "1")
         conf = service_config("service_1")
         self.assertEqual(conf["port"], "1")
+
+        self.assertEqual(
+            open(self.service_file_path).read().find(" = "),
+            -1,
+            "Whitespaces between delimiters were found, but should not be present",
+        )
 
     def test_write_service(self):
         self.assertRaises(ServiceNotFound, write_service, "non_existing_service", {"key": "value"})
@@ -71,3 +83,9 @@ class TestLib(unittest.TestCase):
         config_2 = service_config("service_2")
         write_service("service_3", config_2)
         self.assertEqual(service_config("service_3"), config_2)
+
+        self.assertEqual(
+            open(self.service_file_path).read().find(" = "),
+            -1,
+            "Whitespaces between delimiters were found, but should not be present",
+        )
