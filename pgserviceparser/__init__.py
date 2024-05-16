@@ -1,5 +1,6 @@
 import configparser
-from os import getenv, path
+import platform
+from os import getenv
 from pathlib import Path
 from typing import Optional
 
@@ -12,12 +13,16 @@ def conf_path() -> Path:
     """
     pg_config_path = None
     if getenv("PGSERVICEFILE"):
-        pg_config_path = getenv("PGSERVICEFILE")
+        pg_config_path = Path(getenv("PGSERVICEFILE"))
     elif getenv("PGSYSCONFDIR"):
-        pg_config_path = path.join(getenv("PGSYSCONFDIR"), "pg_service.conf")
+        pg_config_path = Path(getenv("PGSYSCONFDIR")) / "pg_service.conf"
     else:
-        pg_config_path = "~/.pg_service.conf"
-    return Path(pg_config_path).expanduser()
+        if platform.system() == "Windows":
+            pg_config_path = Path(getenv("APPDATA")) / "postgresql/.pg_service.conf"
+        else:  # Linux or Darwin (Mac)
+            pg_config_path = Path("~/.pg_service.conf").expanduser()
+
+    return pg_config_path
 
 
 def full_config(conf_file_path: Optional[Path] = None) -> configparser.ConfigParser:
@@ -70,7 +75,7 @@ def write_service_setting(
     service_name: str,
     setting_key: str,
     setting_value: str,
-    conf_file_path: Optional[str] = None,
+    conf_file_path: Optional[Path] = None,
 ):
     """Writes a service setting to the service file.
 
@@ -97,7 +102,7 @@ def write_service_setting(
 def write_service(
     service_name: str,
     settings: dict,
-    conf_file_path: Optional[str] = None,
+    conf_file_path: Optional[Path] = None,
 ):
     """Writes a complete service to the service file.
 
@@ -119,7 +124,7 @@ def write_service(
         config.write(configfile, space_around_delimiters=False)
 
 
-def service_names(conf_file_path: Optional[str] = None) -> list[str]:
+def service_names(conf_file_path: Optional[Path] = None) -> list[str]:
     """Returns all service names in a list.
 
     Args:
