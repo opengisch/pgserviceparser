@@ -50,9 +50,23 @@ Optionally you can pass a config file path. Otherwise it gets it by `conf_path`.
 
 ## Contribute
 
+### Test
+
+```sh
+pip install -e .[test]
+nose2 -v
+```
+
 ### Git hooks
 
 ```sh
 pip install pre-commit
 pre-commit install
+```
+
+### Build documentation
+
+```sh
+pip install -e .[docs]
+mkdocs build -f docs/mkdocs.yml
 ```
