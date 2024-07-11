@@ -3,6 +3,7 @@ test/data/pgservice.conf
 
 __pycache__/
 .idea
+.vscode
 *.egg-info
 *.py[cod]
 *$py.class
