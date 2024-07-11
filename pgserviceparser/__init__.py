@@ -112,23 +112,24 @@ def write_service_setting(
 
 
 def write_service(
-    service_name: str,
-    settings: dict,
-    conf_file_path: Optional[Path] = None,
-):
+    service_name: str, settings: dict, conf_file_path: Optional[Path] = None, add_if_not_exists: bool = False
+) -> dict:
     """Writes a complete service to the service file.
 
     Args:
         service_name: service name
         settings: settings dict defining the service config
-        conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used, defaults to None
+        conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used,
+            defaults to None
+        add_if_not_exists: option to create a new service if it does not exist yet.
+            Defaults to False.
 
     Raises:
         ServiceFileNotFound: when the service file is not found
         ServiceNotFound: when the service is not found
     """
     config = full_config(conf_file_path)
-    if service_name not in config:
+    if service_name not in config and not add_if_not_exists:
         raise ServiceNotFound(
             service_name=service_name,
             existing_service_names=service_names(),
@@ -138,6 +139,8 @@ def write_service(
     config[service_name] = settings.copy()
     with open(conf_file_path or conf_path(), "w") as configfile:
         config.write(configfile, space_around_delimiters=False)
+
+    return dict(config[service_name])
 
 
 def service_names(conf_file_path: Optional[Path] = None) -> list[str]:

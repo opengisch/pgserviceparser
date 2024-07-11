@@ -102,6 +102,12 @@ class TestLib(unittest.TestCase):
             "Whitespaces between delimiters were found, but should not be present",
         )
 
+        # add new service
+        new_srv_settings = {"host": "host_4", "dbname": "db_4", "port": 4444, "user": "user_4", "password": "pwd_4"}
+        new_srv = write_service(service_name="service_4", settings=new_srv_settings, add_if_not_exists=True)
+        self.assertIsInstance(new_srv, dict)
+        self.assertIn("service_4", service_names())
+
 
 if __name__ == "__main__":
     unittest.main()
