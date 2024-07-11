@@ -1,8 +1,12 @@
+# standard library
 import configparser
 import platform
 from os import getenv
 from pathlib import Path
 from typing import Optional
+
+# package
+from pgserviceparser.exceptions import ServiceFileNotFound, ServiceNotFound
 
 
 def conf_path() -> Path:
@@ -43,7 +47,7 @@ def full_config(conf_file_path: Optional[Path] = None) -> configparser.ConfigPar
         conf_file_path = Path(conf_file_path)
 
     if not conf_file_path.exists():
-        raise ServiceFileNotFound(conf_file_path)
+        raise ServiceFileNotFound(pg_service_filepath=conf_file_path)
 
     config = configparser.ConfigParser()
     config.read(conf_file_path)
@@ -66,7 +70,11 @@ def service_config(service_name: str, conf_file_path: Optional[Path] = None) -> 
     config = full_config(conf_file_path)
 
     if service_name not in config:
-        raise ServiceNotFound
+        raise ServiceNotFound(
+            service_name=service_name,
+            existing_service_names=service_names(),
+            pg_service_filepath=conf_file_path or conf_path(),
+        )
 
     return dict(config[service_name])
 
@@ -92,7 +100,11 @@ def write_service_setting(
 
     config = full_config(conf_file_path)
     if service_name not in config:
-        raise ServiceNotFound(service_name)
+        raise ServiceNotFound(
+            service_name=service_name,
+            existing_service_names=service_names(),
+            pg_service_filepath=conf_file_path or conf_path(),
+        )
 
     config[service_name][setting_key] = setting_value
     with open(conf_file_path or conf_path(), "w") as configfile:
@@ -117,7 +129,11 @@ def write_service(
     """
     config = full_config(conf_file_path)
     if service_name not in config:
-        raise ServiceNotFound(service_name)
+        raise ServiceNotFound(
+            service_name=service_name,
+            existing_service_names=service_names(),
+            pg_service_filepath=conf_file_path or conf_path(),
+        )
 
     config[service_name] = settings.copy()
     with open(conf_file_path or conf_path(), "w") as configfile:
@@ -139,11 +155,3 @@ def service_names(conf_file_path: Optional[Path] = None) -> list[str]:
 
     config = full_config(conf_file_path)
     return config.sections()
-
-
-class ServiceNotFound(Exception):
-    pass
-
-
-class ServiceFileNotFound(Exception):
-    pass

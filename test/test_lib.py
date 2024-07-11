@@ -5,8 +5,6 @@ import unittest
 from pathlib import Path
 
 from pgserviceparser import (
-    ServiceFileNotFound,
-    ServiceNotFound,
     conf_path,
     full_config,
     service_config,
@@ -14,6 +12,7 @@ from pgserviceparser import (
     write_service,
     write_service_setting,
 )
+from pgserviceparser.exceptions import ServiceFileNotFound, ServiceNotFound
 
 PGSERVICEPARSER_SRC_PATH = Path(os.environ["PGSERVICEPARSER_SRC_DIR"])
 
