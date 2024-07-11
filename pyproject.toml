@@ -29,9 +29,6 @@ docs = [
     "mkdocs-material~=9.5.17",
     "fancyboxmd~=1.1"
 ]
-test = [
-  "nose2~=0.15",
-]
 
 [project.urls]
 homepage = "https://opengisch.github.io/pgserviceparser/"

@@ -53,8 +53,9 @@ Optionally you can pass a config file path. Otherwise it gets it by `conf_path`.
 ### Test
 
 ```sh
-pip install -e .[test]
-nose2 -v
+pip install -e .
+export PGSERVICEPARSER_SRC_DIR=$pwd
+python -m unittest test.test_lib
 ```
 
 ### Git hooks

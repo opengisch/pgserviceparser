@@ -1,4 +1,17 @@
-#! /usr/bin/env python
+#! python3
+
+"""Library unit tests.
+
+Usage from the repo root folder:
+
+    python -m unittest test.test_lib
+
+For a specific test:
+
+    python -m unittest test.test_lib.TestLib.test_remove_service
+
+"""
+
 import os
 import shutil
 import unittest
@@ -88,3 +101,7 @@ class TestLib(unittest.TestCase):
             -1,
             "Whitespaces between delimiters were found, but should not be present",
         )
+
+
+if __name__ == "__main__":
+    unittest.main()
