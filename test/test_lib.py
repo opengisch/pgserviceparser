@@ -20,6 +20,7 @@ from pathlib import Path
 from pgserviceparser import (
     conf_path,
     full_config,
+    remove_service,
     service_config,
     service_names,
     write_service,
@@ -107,6 +108,20 @@ class TestLib(unittest.TestCase):
         new_srv = write_service(service_name="service_4", settings=new_srv_settings, create_if_not_found =True)
         self.assertIsInstance(new_srv, dict)
         self.assertIn("service_4", service_names())
+
+    def test_remove_service(self):
+        with self.assertRaises(ServiceNotFound):
+            remove_service("non_existing_service")
+
+        # add new service
+        new_srv_settings = {
+            "host": "host_5",
+            "port": 5555,
+        }
+        new_srv = write_service(service_name="service_tmp", settings=new_srv_settings, add_if_not_exists=True)
+        self.assertIsInstance(new_srv, dict)
+        self.assertIn("service_tmp", service_names())
+        remove_service("service_tmp")
 
 
 if __name__ == "__main__":
