@@ -2,7 +2,9 @@ name: "📚 Documentation Builder"
 
 on:
   push:
-    branches: [main, docs]
+    branches:
+        - main
+        - docs
     paths:
       - .github/workflows/docs_builder.yml
       - pgserviceparser/**/*.py
@@ -12,7 +14,8 @@ on:
       - "*"
 
   pull_request:
-    branches: [master]
+    branches:
+        - main
     paths:
       - .github/workflows/docs_builder.yml
       - pgserviceparser/**/*.py
