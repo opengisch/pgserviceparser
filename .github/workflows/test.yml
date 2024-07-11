@@ -26,9 +26,10 @@ jobs:
           cache: "pip"
 
       - name: Install pgserviceparser with test dependencies
-        run: pip install -e .[test]
+        run: pip install -e .
 
       - name: Run Python tests
         env:
             PGSERVICEPARSER_SRC_DIR: ${{ github.workspace }}
-        run: nose2 -v
+        run: |
+          python -m unittest test.test_lib
