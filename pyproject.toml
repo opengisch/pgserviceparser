@@ -23,6 +23,16 @@ classifiers = [
 license = { text = "MIT License" }
 dynamic = ["version", "readme"]
 
+[project.optional-dependencies]
+docs = [
+    "mkdocstrings[python]~=0.25",
+    "mkdocs-material~=9.5.17",
+    "fancyboxmd~=1.1"
+]
+test = [
+  "nose2~=0.15",
+]
+
 [project.urls]
 homepage = "https://opengisch.github.io/pgserviceparser/"
 repository = "https://github.com/opengisch/pgserviceparser"
