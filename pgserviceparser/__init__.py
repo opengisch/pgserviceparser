@@ -127,6 +127,9 @@ def write_service(
     Raises:
         ServiceFileNotFound: when the service file is not found
         ServiceNotFound: when the service is not found
+
+    Returns:
+        newly created service as dictionary
     """
     config = full_config(conf_file_path)
     if service_name not in config and not create_if_not_found:
