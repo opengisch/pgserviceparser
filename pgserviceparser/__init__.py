@@ -112,7 +112,7 @@ def write_service_setting(
 
 
 def write_service(
-    service_name: str, settings: dict, conf_file_path: Optional[Path] = None, add_if_not_exists: bool = False
+    service_name: str, settings: dict, conf_file_path: Optional[Path] = None, create_if_not_found: bool = False
 ) -> dict:
     """Writes a complete service to the service file.
 
