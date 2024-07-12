@@ -1,4 +1,4 @@
-site_name: pgserviceparser documentation
+unsite_name: pgserviceparser documentation
 
 theme:
   name: "material"
@@ -12,4 +12,4 @@ markdown_extensions:
 
 nav:
   - pgserviceparser: index.md
-  - exceptions: excpetions.md
+  - exceptions: exceptions.md
