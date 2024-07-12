@@ -52,4 +52,5 @@ jobs:
 
     - name: Deploy to GitHub Pages
       if: contains(fromJSON('["push", "workflow_dispatch"]'), github.event_name)
+      working-directory: docs
       run: mkdocs gh-deploy --force
