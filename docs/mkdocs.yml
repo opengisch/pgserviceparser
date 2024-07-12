@@ -1,4 +1,4 @@
-unsite_name: pgserviceparser documentation
+site_name: pgserviceparser documentation
 
 theme:
   name: "material"
