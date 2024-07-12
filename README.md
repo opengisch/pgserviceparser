@@ -46,6 +46,15 @@ Optionally you can pass a config file path. Otherwise it gets it by `conf_path`.
 <configparser.ConfigParser object at 0x7f4c6d66b580>
 ```
 
+## Add a new service
+
+```python
+import pgserviceparser
+new_srv_settings = {"host": "localhost", "dbname": "best_database_ever", "port": 5432, "user": "ro_gis_user"}
+new_srv = pgserviceparser.write_service(service_name="gis_prod_ro", settings=new_srv_settings, add_if_not_exists=True)
+assert isintance(new_srv, dict)
+```
+
 ----
 
 ## Contribute
