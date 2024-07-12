@@ -54,6 +54,31 @@ def full_config(conf_file_path: Optional[Path] = None) -> configparser.ConfigPar
     return config
 
 
+def remove_service(service_name: str, conf_file_path: Optional[Path] = None) -> None:
+    """Remove a complete service from the service file.
+
+    Args:
+        service_name: service name
+        conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used,
+            defaults to None
+
+    Raises:
+        ServiceFileNotFound: when the service file is not found
+        ServiceNotFound: when the service is not found
+    """
+    config = full_config(conf_file_path)
+    if service_name not in config:
+        raise ServiceNotFound(
+            service_name=service_name,
+            existing_service_names=service_names(),
+            pg_service_filepath=conf_file_path or conf_path(),
+        )
+
+    config.remove_section(service_name)
+    with open(conf_file_path or conf_path(), "w") as configfile:
+        config.write(configfile, space_around_delimiters=False)
+
+
 def service_config(service_name: str, conf_file_path: Optional[Path] = None) -> dict:
     """Returns the config from the given service name as a dict.
 
@@ -121,7 +146,7 @@ def write_service(
         settings: settings dict defining the service config
         conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used,
             defaults to None
-        add_if_not_exists: option to create a new service if it does not exist yet.
+        create_if_not_found: option to create a new service if it does not exist yet.
             Defaults to False.
 
     Raises:
