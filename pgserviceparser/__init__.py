@@ -129,7 +129,7 @@ def write_service(
         ServiceNotFound: when the service is not found
     """
     config = full_config(conf_file_path)
-    if service_name not in config and not add_if_not_exists:
+    if service_name not in config and not create_if_not_found:
         raise ServiceNotFound(
             service_name=service_name,
             existing_service_names=service_names(),
