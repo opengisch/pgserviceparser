@@ -105,7 +105,7 @@ class TestLib(unittest.TestCase):
 
         # add new service
         new_srv_settings = {"host": "host_4", "dbname": "db_4", "port": 4444, "user": "user_4", "password": "pwd_4"}
-        new_srv = write_service(service_name="service_4", settings=new_srv_settings, create_if_not_found =True)
+        new_srv = write_service(service_name="service_4", settings=new_srv_settings, create_if_not_found=True)
         self.assertIsInstance(new_srv, dict)
         self.assertIn("service_4", service_names())
 
@@ -118,7 +118,7 @@ class TestLib(unittest.TestCase):
             "host": "host_5",
             "port": 5555,
         }
-        new_srv = write_service(service_name="service_tmp", settings=new_srv_settings, add_if_not_exists=True)
+        new_srv = write_service(service_name="service_tmp", settings=new_srv_settings, create_if_not_found=True)
         self.assertIsInstance(new_srv, dict)
         self.assertIn("service_tmp", service_names())
         remove_service("service_tmp")

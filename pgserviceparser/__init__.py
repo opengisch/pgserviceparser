@@ -146,7 +146,7 @@ def write_service(
         settings: settings dict defining the service config
         conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used,
             defaults to None
-        add_if_not_exists: option to create a new service if it does not exist yet.
+        create_if_not_found: option to create a new service if it does not exist yet.
             Defaults to False.
 
     Raises:
