@@ -11,4 +11,5 @@ markdown_extensions:
   - codehilite
 
 nav:
-  - Reference: index.md
+  - pgserviceparser: index.md
+  - exceptions: excpetions.md
