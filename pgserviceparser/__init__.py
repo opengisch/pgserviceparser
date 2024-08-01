@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional
 
 # package
-from pgserviceparser.exceptions import ServiceFileNotFound, ServiceNotFound
+from .exceptions import ServiceFileNotFound, ServiceNotFound
 
 
 def conf_path() -> Path:
