@@ -9,7 +9,7 @@ from typing import Optional
 from .exceptions import ServiceFileNotFound, ServiceNotFound
 
 
-def conf_path(create_if_missing: bool = False) -> Path:
+def conf_path(create_if_missing: Optional[bool] = False) -> Path:
     """Returns the path found for the pg_service.conf on the system as string.
 
     Args:

@@ -123,6 +123,25 @@ class TestLib(unittest.TestCase):
         self.assertIn("service_tmp", service_names())
         remove_service("service_tmp")
 
+    def test_missing_file(self):
+        another_service_file_path = PGSERVICEPARSER_SRC_PATH / "test" / "data" / "new_folder" / "pgservice.conf"
+        os.environ["PGSERVICEFILE"] = str(another_service_file_path)
+
+        self.assertEqual(another_service_file_path, conf_path())
+        self.assertFalse(another_service_file_path.exists())
+        self.assertFalse(another_service_file_path.parent.exists())
+
+        self.assertEqual(another_service_file_path, conf_path(create_if_missing=True))
+        self.assertTrue(another_service_file_path.exists())
+        self.assertTrue(another_service_file_path.parent.exists())
+
+        os.environ["PGSERVICEFILE"] = str(self.service_file_path)
+
+    def tearDown(self):
+        new_folder_path = self.service_file_path.parent / "new_folder"
+        if new_folder_path.exists():
+            shutil.rmtree(new_folder_path)
+
 
 if __name__ == "__main__":
     unittest.main()
