@@ -9,8 +9,11 @@ from typing import Optional
 from .exceptions import ServiceFileNotFound, ServiceNotFound
 
 
-def conf_path() -> Path:
+def conf_path(create_if_missing: bool = False) -> Path:
     """Returns the path found for the pg_service.conf on the system as string.
+
+    Args:
+        create_if_missing: Whether to create the file (and eventually its parent folders) if the file does not exist.
 
     Returns:
         path to the pg_service.conf file as string
@@ -25,6 +28,14 @@ def conf_path() -> Path:
             pg_config_path = Path(getenv("APPDATA")) / "postgresql/.pg_service.conf"
         else:  # Linux or Darwin (Mac)
             pg_config_path = Path("~/.pg_service.conf").expanduser()
+
+    if create_if_missing and not pg_config_path.exists():
+        # Make sure all parent directories exist
+        if not pg_config_path.parent.exists():
+            pg_config_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Finally, make sure the file itself exists
+        Path.touch(pg_config_path)
 
     return pg_config_path
 
