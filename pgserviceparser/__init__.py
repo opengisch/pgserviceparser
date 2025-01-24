@@ -76,6 +76,7 @@ def remove_service(service_name: str, conf_file_path: Optional[Path] = None) -> 
     Raises:
         ServiceFileNotFound: when the service file is not found
         ServiceNotFound: when the service is not found
+        PermissionError: when the service file is read-only
     """
     config = full_config(conf_file_path)
     if service_name not in config:
@@ -132,6 +133,7 @@ def write_service_setting(
     Raises:
         ServiceFileNotFound: when the service file is not found
         ServiceNotFound: when the service is not found
+        PermissionError: when the service file is read-only
     """
 
     config = full_config(conf_file_path)
@@ -163,6 +165,7 @@ def write_service(
     Raises:
         ServiceFileNotFound: when the service file is not found
         ServiceNotFound: when the service is not found
+        PermissionError: when the service file is read-only
 
     Returns:
         existing or newly created service as dictionary
