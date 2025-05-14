@@ -109,6 +109,27 @@ class TestLib(unittest.TestCase):
         self.assertIsInstance(new_srv, dict)
         self.assertIn("service_4", service_names())
 
+    def test_create_pgservice_file(self):
+        # Create a new service file
+        new_service_file_path: Path = PGSERVICEPARSER_SRC_PATH / "test" / "data" / "notexising" / "pgservice.conf"
+        os.environ["PGSERVICEFILE"] = str(new_service_file_path)
+
+        new_srv_settings = {
+            "host": "localhost",
+            "dbname": "create_me_if_you_can",
+            "port": 5566,
+            "user": "rw_gis_user",
+        }
+        new_srv = write_service(service_name="gis_prod_ro", settings=new_srv_settings, create_if_not_found=True)
+        self.assertIsInstance(new_srv, dict)
+        self.assertIn("gis_prod_ro", service_names())
+        self.assertEqual(new_srv["host"], "localhost")
+        self.assertEqual(new_srv["dbname"], "create_me_if_you_can")
+        self.assertEqual(new_srv["port"], "5566")
+        self.assertEqual(new_srv["user"], "rw_gis_user")
+
+        new_service_file_path.unlink()
+
     def test_remove_service(self):
         with self.assertRaises(ServiceNotFound):
             remove_service("non_existing_service")

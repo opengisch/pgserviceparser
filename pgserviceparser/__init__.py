@@ -170,7 +170,9 @@ def write_service(
     Returns:
         existing or newly created service as dictionary
     """
-    config = full_config(conf_file_path)
+
+    config = full_config(conf_path(create_if_missing=create_if_not_found))
+
     if service_name not in config and not create_if_not_found:
         raise ServiceNotFound(
             service_name=service_name,
