@@ -24,6 +24,8 @@ license = { text = "MIT License" }
 dynamic = ["version", "readme"]
 
 [project.optional-dependencies]
+dev = ["pre-commit>4,<5"]
+
 docs = [
     "mkdocstrings[python]~=0.25",
     "mkdocs-material>=9.5.17,<9.7.0",

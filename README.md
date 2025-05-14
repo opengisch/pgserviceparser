@@ -80,7 +80,7 @@ pgserviceparser.remove_service("gis_prod_ro")
 ### Test
 
 ```sh
-pip install -e .
+pip install -e .[dev]
 export PGSERVICEPARSER_SRC_DIR=$pwd
 python -m unittest test.test_lib
 ```
