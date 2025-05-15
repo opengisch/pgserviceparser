@@ -111,7 +111,7 @@ class TestLib(unittest.TestCase):
 
     def test_create_pgservice_file(self):
         # Create a new service file
-        new_service_file_path: Path = PGSERVICEPARSER_SRC_PATH / "test" / "data" / "notexising" / "pgservice.conf"
+        new_service_file_path: Path = PGSERVICEPARSER_SRC_PATH / "test" / "data" / "notexisting" / "pgservice.conf"
         os.environ["PGSERVICEFILE"] = str(new_service_file_path)
 
         new_srv_settings = {
