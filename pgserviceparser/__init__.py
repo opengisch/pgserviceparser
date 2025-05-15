@@ -8,6 +8,13 @@ from typing import Optional
 # package
 from .exceptions import ServiceFileNotFound, ServiceNotFound
 
+# Constants for common parameters
+PARAMETER_NAME_HOST = "host"
+PARAMETER_NAME_PORT = "port"
+PARAMETER_NAME_DBNAME = "dbname"
+PARAMETER_NAME_USER = "user"
+PARAMETER_NAME_PASSWORD = "password"
+
 
 def conf_path(create_if_missing: Optional[bool] = False) -> Path:
     """Returns the path found for the pg_service.conf on the system as string.
