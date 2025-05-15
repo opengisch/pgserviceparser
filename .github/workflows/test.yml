@@ -10,10 +10,18 @@ on:
   workflow_dispatch:
   workflow_call:
 
-
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
 
     steps:
       - name: Get source code
@@ -22,14 +30,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
+          python-version: ${{ matrix.python-version }}
           cache: "pip"
+          cache-dependency-path: pyproject.toml
 
       - name: Install pgserviceparser with test dependencies
         run: pip install -e .
 
       - name: Run Python tests
         env:
-            PGSERVICEPARSER_SRC_DIR: ${{ github.workspace }}
+          PGSERVICEPARSER_SRC_DIR: ${{ github.workspace }}
         run: |
           python -m unittest test.test_lib
