@@ -60,7 +60,7 @@ def full_config(conf_file_path: Optional[Path] = None) -> configparser.ConfigPar
     if not conf_file_path.exists():
         raise ServiceFileNotFound(pg_service_filepath=conf_file_path)
 
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(interpolation=None)
     config.read(conf_file_path)
     return config
 
