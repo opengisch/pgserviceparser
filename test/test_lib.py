@@ -4,10 +4,12 @@
 
 Usage from the repo root folder:
 
+    export PGSERVICEPARSER_SRC_DIR=$pwd
     python -m unittest test.test_lib
 
 For a specific test:
 
+    export PGSERVICEPARSER_SRC_DIR=$pwd
     python -m unittest test.test_lib.TestLib.test_remove_service
 
 """
@@ -25,6 +27,7 @@ from pgserviceparser import (
     service_names,
     write_service,
     write_service_setting,
+    write_service_to_text,
 )
 from pgserviceparser.exceptions import ServiceFileNotFound, ServiceNotFound
 
@@ -49,7 +52,7 @@ class TestLib(unittest.TestCase):
         self.assertRaises(ServiceFileNotFound, full_config, "non_existing_file")
 
     def test_service_names(self):
-        self.assertEqual(service_names(), ["service_1", "service_2", "service_3"])
+        self.assertEqual(service_names(), ["service_1", "service_2", "service_3", "service_4"])
 
     def test_service_config(self):
         self.assertRaises(ServiceNotFound, service_config, "non_existing_service")
@@ -108,6 +111,13 @@ class TestLib(unittest.TestCase):
         new_srv = write_service(service_name="service_4", settings=new_srv_settings, create_if_not_found=True)
         self.assertIsInstance(new_srv, dict)
         self.assertIn("service_4", service_names())
+
+    def test_write_service_to_text(self):
+        config_4 = service_config("service_4")
+        res = write_service_to_text("service_4", config_4)
+        expected = "[service_4]\nhost=my-project-db-65b82f87-f737-4d69-8cf4-1dd7cd8.withoutclouds.com\ndbname=db_4 # My comment\nport=4444\nuser=user_4\npassword=pwd_%4 # Test for issue #46\nsslkey=/home/s.key"
+
+        self.assertEqual(res, expected)
 
     def test_create_pgservice_file(self):
         # Create a new service file
