@@ -1,5 +1,6 @@
 # standard library
 import configparser
+import io
 import platform
 from os import getenv
 from pathlib import Path
@@ -185,6 +186,27 @@ def write_service(
         config.write(configfile, space_around_delimiters=False)
 
     return dict(config[service_name])
+
+
+def write_service_to_text(service_name: str, settings: dict) -> str:
+    """Returns the complete service settings as a string.
+
+    Args:
+        service_name: service name
+        settings: settings dict defining the service config
+
+    Returns:
+        Service settings as a string
+    """
+    config = configparser.ConfigParser(interpolation=None)
+    config[service_name] = settings.copy()
+
+    config_stream = io.StringIO()
+    config.write(config_stream, space_around_delimiters=False)
+    res = config_stream.getvalue()
+    config_stream.close()
+
+    return res.strip()
 
 
 def service_names(conf_file_path: Optional[Path] = None) -> list[str]:
