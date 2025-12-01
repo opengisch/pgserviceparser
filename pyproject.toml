@@ -28,7 +28,7 @@ dev = ["pre-commit>4,<5"]
 
 docs = [
     "mkdocstrings[python]~=0.25",
-    "mkdocs-material>=9.5.17,<9.7.0",
+    "mkdocs-material>=9.5.17,<9.8.0",
     "fancyboxmd~=1.1"
 ]
 
