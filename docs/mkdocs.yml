@@ -1,18 +1,15 @@
 site_name: pgserviceparser documentation
-
 theme:
   name: "material"
-
 plugins:
   - mkdocstrings
-
 markdown_extensions:
   - admonition
   - codehilite
-
 nav:
   - Home: index.md
   - API:
       - Reference: api.md
       - Exceptions: exceptions.md
+      - GUI Widget: gui_widget_api.md
   - GUI: gui.md
