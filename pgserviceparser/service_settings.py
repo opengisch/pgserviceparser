@@ -92,7 +92,7 @@ SERVICE_SETTINGS: dict[str, dict] = {
     },
     "sslkey": {
         "default": "",
-        "description": ("Specifies the location for the secret key used for the client certificate."),
+        "description": "Specifies the location for the secret key used for the client certificate.",
         "widget_type": WidgetType.FILE,
         "config": {
             "filter": "SSL secret key files (*.key)",
