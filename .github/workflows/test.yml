@@ -28,6 +28,9 @@ jobs:
       - name: Install pgserviceparser with test dependencies
         run: pip install -e ".[gui]"
 
+      - name: Install Qt runtime dependencies
+        run: sudo apt-get update && sudo apt-get install -y libegl1
+
       - name: Run Python tests
         env:
             PGSERVICEPARSER_SRC_DIR: ${{ github.workspace }}
