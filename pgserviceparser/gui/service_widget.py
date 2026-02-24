@@ -51,6 +51,14 @@ class PGServiceParserWidget(QWidget):
         conf_file_path: Path | None = None,
         parent: QWidget | None = None,
     ):
+        """Create a new PGServiceParserWidget.
+
+        Args:
+            conf_file_path: Path to the ``pg_service.conf`` file.
+                When ``None``, the default path returned by
+                :func:`pgserviceparser.conf_path` is used.
+            parent: Optional parent widget.
+        """
         super().__init__(parent)
         self._conf_file_path = conf_file_path or pgserviceparser.conf_path()
         self._edit_model: _ServiceConfigModel | None = None

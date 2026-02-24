@@ -1,6 +1,8 @@
 site_name: pgserviceparser documentation
 theme:
   name: "material"
+  logo: assets/images/logo.png
+  favicon: assets/images/logo.png
 plugins:
   - mkdocstrings
 markdown_extensions:
@@ -11,5 +13,5 @@ nav:
   - API:
       - Reference: api.md
       - Exceptions: exceptions.md
-      - GUI Widget: gui_widget_api.md
+      - PGServiceParserWidget: pgserviceparser_widget.md
   - GUI: gui.md
