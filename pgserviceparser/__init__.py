@@ -124,6 +124,74 @@ def rename_service(old_name: str, new_name: str, conf_file_path: Optional[Path] 
         config.write(configfile, space_around_delimiters=False)
 
 
+def create_service(service_name: str, settings: dict, conf_file_path: Optional[Path] = None) -> bool:
+    """Create a new service in the service file.
+
+    If the service already exists, nothing is changed and False is returned.
+
+    Args:
+        service_name: service name
+        settings: settings dict defining the service config
+        conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used,
+            defaults to None
+
+    Returns:
+        True if the service was created, False if it already existed
+
+    Raises:
+        ServiceFileNotFound: when the service file is not found
+        PermissionError: when the service file is read-only
+    """
+    config = full_config(conf_file_path)
+    if service_name in config:
+        return False
+
+    config[service_name] = settings.copy()
+    with open(conf_file_path or conf_path(), "w") as configfile:
+        config.write(configfile, space_around_delimiters=False)
+
+    return True
+
+
+def copy_service_settings(
+    source_service_name: str,
+    target_service_name: str,
+    conf_file_path: Optional[Path] = None,
+) -> bool:
+    """Copy all settings from one service to another.
+
+    If the target service does not exist, it is created.
+
+    Args:
+        source_service_name: name of the service to copy settings from
+        target_service_name: name of the service to copy settings to
+        conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used,
+            defaults to None
+
+    Returns:
+        True on success
+
+    Raises:
+        ServiceFileNotFound: when the service file is not found
+        ServiceNotFound: when the source service is not found
+        PermissionError: when the service file is read-only
+    """
+    config = full_config(conf_file_path)
+    if source_service_name not in config:
+        raise ServiceNotFound(
+            service_name=source_service_name,
+            existing_service_names=service_names(),
+            pg_service_filepath=conf_file_path or conf_path(),
+        )
+
+    settings = dict(config[source_service_name])
+    config[target_service_name] = settings
+    with open(conf_file_path or conf_path(), "w") as configfile:
+        config.write(configfile, space_around_delimiters=False)
+
+    return True
+
+
 def service_config(service_name: str, conf_file_path: Optional[Path] = None) -> dict:
     """Returns the config from the given service name as a dict.
 

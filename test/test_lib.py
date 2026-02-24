@@ -21,6 +21,8 @@ from pathlib import Path
 
 from pgserviceparser import (
     conf_path,
+    copy_service_settings,
+    create_service,
     full_config,
     remove_service,
     rename_service,
@@ -155,6 +157,55 @@ class TestLib(unittest.TestCase):
         # New name should exist with the same settings
         self.assertIn("service_1_renamed", service_names())
         self.assertEqual(service_config("service_1_renamed"), original_config)
+
+        # No whitespace around delimiters
+        self.assertEqual(
+            open(self.service_file_path).read().find(" = "),
+            -1,
+            "Whitespaces between delimiters were found, but should not be present",
+        )
+
+    def test_create_service(self):
+        # Create a brand new service
+        settings = {"host": "new_host", "dbname": "new_db", "port": "9999"}
+        result = create_service("service_new", settings)
+        self.assertTrue(result)
+        self.assertIn("service_new", service_names())
+        self.assertEqual(service_config("service_new")["host"], "new_host")
+        self.assertEqual(service_config("service_new")["port"], "9999")
+
+        # Creating the same service again should return False and not change it
+        result = create_service("service_new", {"host": "overwritten"})
+        self.assertFalse(result)
+        self.assertEqual(service_config("service_new")["host"], "new_host")
+
+        # No whitespace around delimiters
+        self.assertEqual(
+            open(self.service_file_path).read().find(" = "),
+            -1,
+            "Whitespaces between delimiters were found, but should not be present",
+        )
+
+    def test_copy_service_settings(self):
+        # Copying from a non-existing service should raise
+        with self.assertRaises(ServiceNotFound):
+            copy_service_settings("non_existing_service", "service_2")
+
+        # Copy service_1 settings to a new service
+        original_config = service_config("service_1")
+        result = copy_service_settings("service_1", "service_1_copy")
+        self.assertTrue(result)
+        self.assertIn("service_1_copy", service_names())
+        self.assertEqual(service_config("service_1_copy"), original_config)
+
+        # Source service should remain unchanged
+        self.assertIn("service_1", service_names())
+        self.assertEqual(service_config("service_1"), original_config)
+
+        # Copy to an existing service should overwrite its settings
+        result = copy_service_settings("service_1", "service_2")
+        self.assertTrue(result)
+        self.assertEqual(service_config("service_2"), original_config)
 
         # No whitespace around delimiters
         self.assertEqual(
