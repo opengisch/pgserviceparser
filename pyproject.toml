@@ -27,9 +27,8 @@ dynamic = ["version", "readme"]
 dev = ["pre-commit>4,<5"]
 
 docs = [
-    "mkdocstrings[python]~=0.25",
-    "mkdocs-material>=9.5.17,<9.8.0",
-    "fancyboxmd~=1.1"
+    "mkdocstrings-python>=1.0.3,<2.0.0",
+    "zensical>=0.0.23,<1.0.0"
 ]
 
 [project.urls]
