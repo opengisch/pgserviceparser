@@ -220,12 +220,12 @@ class TestServiceConfigModel(unittest.TestCase):
 # PGServiceParserWidget tests (integration with temp service file)
 # ---------------------------------------------------------------------------
 class TestServiceWidget(_TempServiceFileMixin, unittest.TestCase):
-    """Integration tests for the ServiceWidget using a temp service file."""
+    """Integration tests for the PGServiceParserWidget using a temp service file."""
 
     def _make_widget(self):
-        from pgserviceparser.gui.service_widget import ServiceWidget
+        from pgserviceparser.gui.service_widget import PGServiceParserWidget
 
-        return ServiceWidget(conf_file_path=self._conf)
+        return PGServiceParserWidget(conf_file_path=self._conf)
 
     def test_loads_services(self):
         w = self._make_widget()
