@@ -26,10 +26,15 @@ dynamic = ["version", "readme"]
 [project.optional-dependencies]
 dev = ["pre-commit>4,<5"]
 
+gui = ["PyQt6"]
+
 docs = [
     "mkdocstrings-python>=1.0.3,<2.0.0",
     "zensical>=0.0.23,<1.0.0"
 ]
+
+[project.scripts]
+pgserviceparser-gui = "pgserviceparser.gui.__main__:main"
 
 [project.urls]
 homepage = "https://opengisch.github.io/pgserviceparser/"
