@@ -3,8 +3,9 @@
 from pathlib import Path
 from typing import Optional
 
-from pgserviceparser.gui.compat import QtCore, QtWidgets
+from pgserviceparser.gui.compat import QtCore, QtGui, QtWidgets
 
+QPixmap = QtGui.QPixmap
 QItemSelection = QtCore.QItemSelection
 QModelIndex = QtCore.QModelIndex
 Qt = QtCore.Qt
@@ -62,8 +63,11 @@ class ServiceWidget(QWidget):
 
         # ---- Status bar: config file path ----
         status_row = QHBoxLayout()
-        self.lblWarning = QLabel("\u26a0")
+        self.lblWarning = QLabel()
         self.lblWarning.setMaximumSize(24, 24)
+        _images_dir = Path(__file__).resolve().parent / "images"
+        self.lblWarning.setPixmap(QPixmap(str(_images_dir / "warning.svg")))
+        self.lblWarning.setScaledContents(True)
         status_row.addWidget(self.lblWarning)
 
         self.lblConfFile = QLabel()
