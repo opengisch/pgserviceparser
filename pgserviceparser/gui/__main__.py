@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 try:
-    from pgserviceparser.gui.compat import QtGui, QtWidgets
+    from .compat import QtGui, QtWidgets
 except ImportError:
     print(
         "Error: PyQt6 is required for the GUI.\n" "Install it with: pip install pgserviceparser[gui]",
@@ -15,7 +15,7 @@ except ImportError:
 QApplication = QtWidgets.QApplication
 QIcon = QtGui.QIcon
 
-from pgserviceparser.gui.main_window import _MainWindow
+from .main_window import _MainWindow
 
 
 def main():

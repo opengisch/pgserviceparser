@@ -1,6 +1,6 @@
 """Service configuration table model for the service settings editor."""
 
-from pgserviceparser.gui.compat import QtCore, QtGui
+from .compat import QtCore, QtGui
 
 QAbstractTableModel = QtCore.QAbstractTableModel
 QModelIndex = QtCore.QModelIndex

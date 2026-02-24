@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pgserviceparser.gui.compat import QtCore, QtGui, QtWidgets, icon_add, icon_remove
+from .compat import QtCore, QtGui, QtWidgets, icon_add, icon_remove
 
 QPixmap = QtGui.QPixmap
 QIcon = QtGui.QIcon
@@ -31,9 +31,10 @@ QWidget = QtWidgets.QWidget
 
 import pgserviceparser
 from pgserviceparser.exceptions import ServiceFileNotFound, ServiceNotFound
-from pgserviceparser.gui.item_delegates import _ServiceConfigDelegate
-from pgserviceparser.gui.setting_model import _ServiceConfigModel
 from pgserviceparser.service_settings import SERVICE_SETTINGS, SETTINGS_TEMPLATE
+
+from .item_delegates import _ServiceConfigDelegate
+from .setting_model import _ServiceConfigModel
 
 _IMAGES_DIR = Path(__file__).parent / "images"
 

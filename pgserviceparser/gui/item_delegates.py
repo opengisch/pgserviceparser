@@ -1,6 +1,6 @@
 """Item delegates for service configuration editing."""
 
-from pgserviceparser.gui.compat import QtCore, QtWidgets
+from .compat import QtCore, QtWidgets
 
 Qt = QtCore.Qt
 QComboBox = QtWidgets.QComboBox
@@ -9,8 +9,9 @@ QLineEdit = QtWidgets.QLineEdit
 QStyledItemDelegate = QtWidgets.QStyledItemDelegate
 QWidget = QtWidgets.QWidget
 
-from pgserviceparser.gui.setting_model import _ServiceConfigModel
 from pgserviceparser.service_settings import WidgetType
+
+from .setting_model import _ServiceConfigModel
 
 
 class _ServiceConfigDelegate(QStyledItemDelegate):

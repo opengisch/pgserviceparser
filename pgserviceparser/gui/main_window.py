@@ -1,10 +1,10 @@
 """Main window for pgserviceparser GUI."""
 
-from pgserviceparser.gui.compat import QtWidgets
+from .compat import QtWidgets
 
 QMainWindow = QtWidgets.QMainWindow
 
-from pgserviceparser.gui.service_widget import PGServiceParserWidget
+from .service_widget import PGServiceParserWidget
 
 
 class _MainWindow(QMainWindow):
