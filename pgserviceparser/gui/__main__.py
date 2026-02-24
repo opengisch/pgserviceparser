@@ -19,6 +19,12 @@ from pgserviceparser.gui.main_window import MainWindow
 
 
 def main():
+    """Launch the pgserviceparser GUI application.
+
+    Creates the QApplication, sets the window icon, and opens the main window.
+    Can be invoked via the ``pgserviceparser-gui`` console script or with
+    ``python -m pgserviceparser.gui``.
+    """
     app = QApplication(sys.argv)
     app.setApplicationName("pgserviceparser-gui")
 
