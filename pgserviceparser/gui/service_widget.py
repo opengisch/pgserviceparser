@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pgserviceparser.gui.compat import QtCore, QtGui, QtWidgets
+from pgserviceparser.gui.compat import QtCore, QtGui, QtWidgets, icon_add, icon_remove
 
 QPixmap = QtGui.QPixmap
 QIcon = QtGui.QIcon
@@ -111,10 +111,10 @@ class ServiceWidget(QWidget):
 
         btn_row = QHBoxLayout()
         self.btnAddService = QToolButton()
-        self.btnAddService.setIcon(QIcon.fromTheme(QIcon.ThemeIcon.ListAdd))
+        self.btnAddService.setIcon(icon_add())
         self.btnAddService.setToolTip("Add a new service")
         self.btnRemoveService = QToolButton()
-        self.btnRemoveService.setIcon(QIcon.fromTheme(QIcon.ThemeIcon.ListRemove))
+        self.btnRemoveService.setIcon(icon_remove())
         self.btnRemoveService.setToolTip("Remove selected service(s)")
         self.btnRemoveService.setEnabled(False)
         btn_row.addWidget(self.btnAddService)
@@ -153,11 +153,11 @@ class ServiceWidget(QWidget):
 
         setting_btns = QVBoxLayout()
         self.btnAddSettings = QPushButton()
-        self.btnAddSettings.setIcon(QIcon.fromTheme(QIcon.ThemeIcon.ListAdd))
+        self.btnAddSettings.setIcon(icon_add())
         self.btnAddSettings.setToolTip("Add settings to current service")
         self.btnAddSettings.setFixedSize(28, 28)
         self.btnRemoveSetting = QPushButton()
-        self.btnRemoveSetting.setIcon(QIcon.fromTheme(QIcon.ThemeIcon.ListRemove))
+        self.btnRemoveSetting.setIcon(icon_remove())
         self.btnRemoveSetting.setToolTip("Remove setting from current service")
         self.btnRemoveSetting.setFixedSize(28, 28)
         self.btnRemoveSetting.setEnabled(False)
