@@ -256,7 +256,7 @@ class ServiceWidget(QWidget):
         if ok and name:
             self._conf_file_path = pgserviceparser.conf_path(create_if_missing=True)
             try:
-                pgserviceparser.create_service(name, {})
+                pgserviceparser.create_service(name, {}, self._conf_file_path)
             except PermissionError:
                 self._permission_warning()
             else:
