@@ -56,7 +56,7 @@ def _when_read_only_try_to_add_write_permission(func):
     return wrapper
 
 
-def conf_path(create_if_missing: Optional[bool] = False) -> Path:
+def conf_path(create_if_missing: bool | None = False) -> Path:
     """Returns the path found for the pg_service.conf on the system as string.
 
     Args:
@@ -87,7 +87,7 @@ def conf_path(create_if_missing: Optional[bool] = False) -> Path:
     return pg_config_path
 
 
-def full_config(conf_file_path: Optional[Path] = None) -> configparser.ConfigParser:
+def full_config(conf_file_path: Path | None = None) -> configparser.ConfigParser:
     """Returns full pgservice config as configparser.ConfigParser().
 
     Args:
@@ -113,7 +113,7 @@ def full_config(conf_file_path: Optional[Path] = None) -> configparser.ConfigPar
 
 
 @_when_read_only_try_to_add_write_permission
-def remove_service(service_name: str, conf_file_path: Optional[Path] = None) -> None:
+def remove_service(service_name: str, conf_file_path: Path | None = None) -> None:
     """Remove a complete service from the service file.
 
     Args:
@@ -140,7 +140,7 @@ def remove_service(service_name: str, conf_file_path: Optional[Path] = None) -> 
 
 
 @_when_read_only_try_to_add_write_permission
-def rename_service(old_name: str, new_name: str, conf_file_path: Optional[Path] = None) -> None:
+def rename_service(old_name: str, new_name: str, conf_file_path: Path | None = None) -> None:
     """Rename a service in the service file.
 
     The service settings are preserved under the new name and the old
@@ -173,7 +173,7 @@ def rename_service(old_name: str, new_name: str, conf_file_path: Optional[Path] 
 
 
 @_when_read_only_try_to_add_write_permission
-def create_service(service_name: str, settings: dict, conf_file_path: Optional[Path] = None) -> bool:
+def create_service(service_name: str, settings: dict, conf_file_path: Path | None = None) -> bool:
     """Create a new service in the service file.
 
     If the service already exists, nothing is changed and False is returned.
@@ -206,7 +206,7 @@ def create_service(service_name: str, settings: dict, conf_file_path: Optional[P
 def copy_service_settings(
     source_service_name: str,
     target_service_name: str,
-    conf_file_path: Optional[Path] = None,
+    conf_file_path: Path | None = None,
 ) -> bool:
     """Copy all settings from one service to another.
 
@@ -242,7 +242,7 @@ def copy_service_settings(
     return True
 
 
-def service_config(service_name: str, conf_file_path: Optional[Path] = None) -> dict:
+def service_config(service_name: str, conf_file_path: Path | None = None) -> dict:
     """Returns the config from the given service name as a dict.
 
     Args:
@@ -272,7 +272,7 @@ def write_service_setting(
     service_name: str,
     setting_key: str,
     setting_value: str,
-    conf_file_path: Optional[Path] = None,
+    conf_file_path: Path | None = None,
 ):
     """Writes a service setting to the service file.
 
@@ -303,7 +303,7 @@ def write_service_setting(
 
 @_when_read_only_try_to_add_write_permission
 def write_service(
-    service_name: str, settings: dict, conf_file_path: Optional[Path] = None, create_if_not_found: bool = False
+    service_name: str, settings: dict, conf_file_path: Path | None = None, create_if_not_found: bool = False
 ) -> dict:
     """Writes a complete service to the service file.
 
@@ -361,7 +361,7 @@ def write_service_to_text(service_name: str, settings: dict) -> str:
     return res.strip()
 
 
-def service_names(conf_file_path: Optional[Path] = None, sorted_alphabetically: bool = False) -> list[str]:
+def service_names(conf_file_path: Path | None = None, sorted_alphabetically: bool = False) -> list[str]:
     """Returns all service names in a list.
 
     Args:

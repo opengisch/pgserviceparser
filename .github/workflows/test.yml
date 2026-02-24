@@ -22,14 +22,24 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.9"
+          python-version: "3.11"
           cache: "pip"
 
       - name: Install pgserviceparser with test dependencies
-        run: pip install -e .
+        run: pip install -e ".[gui]"
+
+      - name: Install Qt runtime dependencies
+        run: sudo apt-get update && sudo apt-get install -y libegl1
 
       - name: Run Python tests
         env:
             PGSERVICEPARSER_SRC_DIR: ${{ github.workspace }}
         run: |
           python -m unittest test.test_lib
+
+      - name: Run GUI tests
+        env:
+            PGSERVICEPARSER_SRC_DIR: ${{ github.workspace }}
+            QT_QPA_PLATFORM: offscreen
+        run: |
+          python -m unittest test.test_gui
