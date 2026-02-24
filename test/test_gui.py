@@ -42,17 +42,17 @@ class _TempServiceFileMixin:
 
 
 # ---------------------------------------------------------------------------
-# ServiceConfigModel tests
+# _ServiceConfigModel tests
 # ---------------------------------------------------------------------------
 class TestServiceConfigModel(unittest.TestCase):
-    """Unit tests for the ServiceConfigModel (no service file needed)."""
+    """Unit tests for the _ServiceConfigModel (no service file needed)."""
 
     def _make_model(self, name="svc", config=None):
-        from pgserviceparser.gui.setting_model import ServiceConfigModel
+        from pgserviceparser.gui.setting_model import _ServiceConfigModel
 
         if config is None:
             config = {"host": "localhost", "port": "5432", "dbname": "mydb"}
-        return ServiceConfigModel(name, config)
+        return _ServiceConfigModel(name, config)
 
     # -- basic properties --
 
@@ -217,7 +217,7 @@ class TestServiceConfigModel(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# ServiceWidget tests (integration with temp service file)
+# PGServiceParserWidget tests (integration with temp service file)
 # ---------------------------------------------------------------------------
 class TestServiceWidget(_TempServiceFileMixin, unittest.TestCase):
     """Integration tests for the ServiceWidget using a temp service file."""
@@ -268,9 +268,9 @@ class TestServiceWidget(_TempServiceFileMixin, unittest.TestCase):
         self.assertTrue(w.btnRemoveService.isEnabled())
 
     def test_missing_conf_file(self):
-        from pgserviceparser.gui.service_widget import ServiceWidget
+        from pgserviceparser.gui.service_widget import PGServiceParserWidget
 
-        w = ServiceWidget(conf_file_path=Path("/tmp/nonexistent_pgservice.conf"))
+        w = PGServiceParserWidget(conf_file_path=Path("/tmp/nonexistent_pgservice.conf"))
         self.assertFalse(w._content_widget.isEnabled())
 
     def test_message_bar_hidden_initially(self):

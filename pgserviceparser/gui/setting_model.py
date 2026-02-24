@@ -12,7 +12,7 @@ QFont = QtGui.QFont
 from pgserviceparser.service_settings import SERVICE_SETTINGS, WidgetType
 
 
-class ServiceConfigModel(QAbstractTableModel):
+class _ServiceConfigModel(QAbstractTableModel):
     """Table model that holds settings (key/value pairs) for a single service."""
 
     KEY_COL = 0
@@ -162,7 +162,7 @@ class ServiceConfigModel(QAbstractTableModel):
     def is_custom_widget_cell(index: QModelIndex) -> bool:
         data = index.data(Qt.ItemDataRole.UserRole)
         return (
-            index.column() == ServiceConfigModel.VALUE_COL
+            index.column() == _ServiceConfigModel.VALUE_COL
             and isinstance(data, dict)
             and "widget_type" in data
             and data["widget_type"] is not None

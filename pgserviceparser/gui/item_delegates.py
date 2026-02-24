@@ -9,18 +9,18 @@ QLineEdit = QtWidgets.QLineEdit
 QStyledItemDelegate = QtWidgets.QStyledItemDelegate
 QWidget = QtWidgets.QWidget
 
-from pgserviceparser.gui.setting_model import ServiceConfigModel
+from pgserviceparser.gui.setting_model import _ServiceConfigModel
 from pgserviceparser.service_settings import WidgetType
 
 
-class ServiceConfigDelegate(QStyledItemDelegate):
+class _ServiceConfigDelegate(QStyledItemDelegate):
     """Delegate that provides appropriate editors for service settings."""
 
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
 
     def createEditor(self, parent: QWidget, option, index):
-        if ServiceConfigModel.is_custom_widget_cell(index):
+        if _ServiceConfigModel.is_custom_widget_cell(index):
             meta = index.data(Qt.ItemDataRole.UserRole)
             widget_type = meta["widget_type"]
             config = meta.get("config") or {}
@@ -57,7 +57,7 @@ class ServiceConfigDelegate(QStyledItemDelegate):
         self.closeEditor.emit(editor)
 
     def setEditorData(self, editor: QWidget, index):
-        if ServiceConfigModel.is_custom_widget_cell(index):
+        if _ServiceConfigModel.is_custom_widget_cell(index):
             meta = index.data(Qt.ItemDataRole.UserRole)
             widget_type = meta["widget_type"]
             value = index.data(Qt.ItemDataRole.EditRole)
@@ -72,7 +72,7 @@ class ServiceConfigDelegate(QStyledItemDelegate):
         super().setEditorData(editor, index)
 
     def setModelData(self, editor: QWidget, model, index):
-        if ServiceConfigModel.is_custom_widget_cell(index):
+        if _ServiceConfigModel.is_custom_widget_cell(index):
             meta = index.data(Qt.ItemDataRole.UserRole)
             widget_type = meta["widget_type"]
 

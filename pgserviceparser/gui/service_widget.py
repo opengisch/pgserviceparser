@@ -31,14 +31,14 @@ QWidget = QtWidgets.QWidget
 
 import pgserviceparser
 from pgserviceparser.exceptions import ServiceFileNotFound, ServiceNotFound
-from pgserviceparser.gui.item_delegates import ServiceConfigDelegate
-from pgserviceparser.gui.setting_model import ServiceConfigModel
+from pgserviceparser.gui.item_delegates import _ServiceConfigDelegate
+from pgserviceparser.gui.setting_model import _ServiceConfigModel
 from pgserviceparser.service_settings import SERVICE_SETTINGS, SETTINGS_TEMPLATE
 
 _IMAGES_DIR = Path(__file__).parent / "images"
 
 
-class ServiceWidget(QWidget):
+class PGServiceParserWidget(QWidget):
     """Widget for listing, creating, editing, and removing PostgreSQL services.
 
     Can be embedded in any PyQt6 application or used inside QGIS via
@@ -52,7 +52,7 @@ class ServiceWidget(QWidget):
     ):
         super().__init__(parent)
         self._conf_file_path = conf_file_path or pgserviceparser.conf_path()
-        self._edit_model: ServiceConfigModel | None = None
+        self._edit_model: _ServiceConfigModel | None = None
         self._new_empty_file = False
 
         self._build_ui()
@@ -310,9 +310,9 @@ class ServiceWidget(QWidget):
             self._service_file_warning()
             return
 
-        self._edit_model = ServiceConfigModel(service_name, config)
+        self._edit_model = _ServiceConfigModel(service_name, config)
         self.tblServiceConfig.setModel(self._edit_model)
-        self.tblServiceConfig.setItemDelegate(ServiceConfigDelegate(self))
+        self.tblServiceConfig.setItemDelegate(_ServiceConfigDelegate(self))
         self.tblServiceConfig.selectionModel().selectionChanged.connect(self._update_settings_buttons)
         self._edit_model.is_dirty_changed.connect(self.btnUpdateService.setEnabled)
         self.btnUpdateService.setDisabled(True)

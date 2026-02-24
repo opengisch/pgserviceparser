@@ -36,7 +36,7 @@ QPen = QtGui.QPen
 QPoint = QtCore.QPoint
 Qt = QtCore.Qt
 
-from pgserviceparser.gui.main_window import MainWindow  # noqa: E402
+from pgserviceparser.gui.main_window import _MainWindow  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -130,7 +130,7 @@ def _process_events(ms: int = 100):
 # ---------------------------------------------------------------------------
 
 
-def step_01_overview(window: MainWindow):
+def step_01_overview(window: _MainWindow):
     """Step 01 – Full window overview with a service selected."""
     sw = window.centralWidget()
     # Select the first service ("dev-local" is alphabetically first)
@@ -139,7 +139,7 @@ def step_01_overview(window: MainWindow):
     _grab(window, "01_overview.png")
 
 
-def step_02_service_selected(window: MainWindow):
+def step_02_service_selected(window: _MainWindow):
     """Step 02 – Service selected, settings visible, highlight the list."""
     sw = window.centralWidget()
     # Select "production-db"
@@ -152,7 +152,7 @@ def step_02_service_selected(window: MainWindow):
     _grab(window, "02_service_selected.png", click_targets=[click_pos])
 
 
-def step_03_settings_editor(window: MainWindow):
+def step_03_settings_editor(window: _MainWindow):
     """Step 03 – Close-up of the settings table for a service."""
     sw = window.centralWidget()
     items = sw.lstServices.findItems("production-db", Qt.MatchFlag.MatchExactly)
@@ -187,11 +187,11 @@ def main():
     print(f"  temp config: {conf_path}")
 
     try:
-        from pgserviceparser.gui.service_widget import ServiceWidget
+        from pgserviceparser.gui.service_widget import PGServiceParserWidget
 
-        window = MainWindow()
+        window = _MainWindow()
         # Replace the central widget with one pointing to our temp config
-        widget = ServiceWidget(conf_file_path=conf_path)
+        widget = PGServiceParserWidget(conf_file_path=conf_path)
         # Show a plausible path instead of the temp directory
         widget.txtConfFile.setText(str(Path.home() / ".pg_service.conf"))
         window.setCentralWidget(widget)

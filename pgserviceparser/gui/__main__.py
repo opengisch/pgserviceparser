@@ -15,7 +15,7 @@ except ImportError:
 QApplication = QtWidgets.QApplication
 QIcon = QtGui.QIcon
 
-from pgserviceparser.gui.main_window import MainWindow
+from pgserviceparser.gui.main_window import _MainWindow
 
 
 def main():
@@ -31,7 +31,7 @@ def main():
     icon_path = Path(__file__).parent / "images" / "logo.png"
     app.setWindowIcon(QIcon(str(icon_path)))
 
-    window = MainWindow()
+    window = _MainWindow()
     window.show()
     sys.exit(app.exec())
 
