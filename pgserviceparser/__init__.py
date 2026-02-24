@@ -10,6 +10,11 @@ from typing import Optional
 # package
 from .exceptions import ServiceFileNotFound, ServiceNotFound
 
+try:
+    from .gui import PGServiceParserWidget  # noqa: F401
+except ImportError:
+    pass
+
 
 def _make_file_writable(path: Path):
     """Attempt to add write permissions to a file.
