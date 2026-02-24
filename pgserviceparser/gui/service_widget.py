@@ -6,6 +6,7 @@ from typing import Optional
 from pgserviceparser.gui.compat import QtCore, QtGui, QtWidgets
 
 QPixmap = QtGui.QPixmap
+QIcon = QtGui.QIcon
 QItemSelection = QtCore.QItemSelection
 QModelIndex = QtCore.QModelIndex
 Qt = QtCore.Qt
@@ -33,6 +34,8 @@ import pgserviceparser
 from pgserviceparser.gui.item_delegates import ServiceConfigDelegate
 from pgserviceparser.gui.setting_model import ServiceConfigModel
 from pgserviceparser.service_settings import SERVICE_SETTINGS, SETTINGS_TEMPLATE
+
+_IMAGES_DIR = Path(__file__).parent / "images"
 
 
 class ServiceWidget(QWidget):
@@ -92,10 +95,10 @@ class ServiceWidget(QWidget):
 
         btn_row = QHBoxLayout()
         self.btnAddService = QToolButton()
-        self.btnAddService.setText("+")
+        self.btnAddService.setIcon(QIcon(str(_IMAGES_DIR / "add.svg")))
         self.btnAddService.setToolTip("Add a new service")
         self.btnRemoveService = QToolButton()
-        self.btnRemoveService.setText("\u2212")  # minus sign
+        self.btnRemoveService.setIcon(QIcon(str(_IMAGES_DIR / "remove.svg")))
         self.btnRemoveService.setToolTip("Remove selected service(s)")
         self.btnRemoveService.setEnabled(False)
         btn_row.addWidget(self.btnAddService)
@@ -134,13 +137,13 @@ class ServiceWidget(QWidget):
 
         setting_btns = QVBoxLayout()
         self.btnAddSettings = QPushButton()
-        self.btnAddSettings.setText("+")
+        self.btnAddSettings.setIcon(QIcon(str(_IMAGES_DIR / "add.svg")))
         self.btnAddSettings.setToolTip("Add settings to current service")
-        self.btnAddSettings.setMaximumSize(25, 25)
+        self.btnAddSettings.setFixedSize(28, 28)
         self.btnRemoveSetting = QPushButton()
-        self.btnRemoveSetting.setText("\u2212")
+        self.btnRemoveSetting.setIcon(QIcon(str(_IMAGES_DIR / "remove.svg")))
         self.btnRemoveSetting.setToolTip("Remove setting from current service")
-        self.btnRemoveSetting.setMaximumSize(25, 25)
+        self.btnRemoveSetting.setFixedSize(28, 28)
         self.btnRemoveSetting.setEnabled(False)
         setting_btns.addWidget(self.btnAddSettings)
         setting_btns.addWidget(self.btnRemoveSetting)
