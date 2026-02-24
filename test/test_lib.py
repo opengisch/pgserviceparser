@@ -16,6 +16,7 @@ For a specific test:
 
 import os
 import shutil
+import stat
 import unittest
 from pathlib import Path
 
@@ -56,6 +57,22 @@ class TestLib(unittest.TestCase):
 
     def test_service_names(self):
         self.assertEqual(service_names(), ["service_1", "service_2", "service_3", "service_4"])
+
+    def test_service_names_sorted_alphabetically(self):
+        # Add a service whose name comes before existing ones alphabetically
+        create_service("Alpha_service", {"host": "localhost"})
+        create_service("zulu_service", {"host": "localhost"})
+
+        # Without sorting, order is as written in the file (appended at the end)
+        names = service_names()
+        self.assertEqual(names[-2:], ["Alpha_service", "zulu_service"])
+
+        # With sorting, names are case-insensitive alphabetical
+        sorted_names = service_names(sorted_alphabetically=True)
+        self.assertEqual(
+            sorted_names,
+            ["Alpha_service", "service_1", "service_2", "service_3", "service_4", "zulu_service"],
+        )
 
     def test_service_config(self):
         self.assertRaises(ServiceNotFound, service_config, "non_existing_service")
@@ -227,6 +244,18 @@ class TestLib(unittest.TestCase):
         self.assertIsInstance(new_srv, dict)
         self.assertIn("service_tmp", service_names())
         remove_service("service_tmp")
+
+    def test_write_on_read_only_file(self):
+        # Make the service file read-only
+        self.service_file_path.chmod(stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+
+        # The decorator should automatically add write permission and succeed
+        write_service_setting("service_1", "port", "9999")
+        conf = service_config("service_1")
+        self.assertEqual(conf["port"], "9999")
+
+        # Verify the file is writable again
+        self.assertTrue(os.access(self.service_file_path, os.W_OK))
 
     def test_missing_file(self):
         another_service_file_path = PGSERVICEPARSER_SRC_PATH / "test" / "data" / "new_folder" / "pgservice.conf"
