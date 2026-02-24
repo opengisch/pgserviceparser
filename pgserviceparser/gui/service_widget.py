@@ -1,7 +1,6 @@
 """Reusable widget for managing PostgreSQL connection services."""
 
 from pathlib import Path
-from typing import Optional
 
 from pgserviceparser.gui.compat import QtCore, QtGui, QtWidgets
 
@@ -48,12 +47,12 @@ class ServiceWidget(QWidget):
 
     def __init__(
         self,
-        conf_file_path: Optional[Path] = None,
-        parent: Optional[QWidget] = None,
+        conf_file_path: Path | None = None,
+        parent: QWidget | None = None,
     ):
         super().__init__(parent)
         self._conf_file_path = conf_file_path or pgserviceparser.conf_path()
-        self._edit_model: Optional[ServiceConfigModel] = None
+        self._edit_model: ServiceConfigModel | None = None
         self._new_empty_file = False
 
         self._build_ui()
