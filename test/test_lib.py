@@ -16,6 +16,7 @@ For a specific test:
 
 import os
 import shutil
+import stat
 import unittest
 from pathlib import Path
 
@@ -243,6 +244,18 @@ class TestLib(unittest.TestCase):
         self.assertIsInstance(new_srv, dict)
         self.assertIn("service_tmp", service_names())
         remove_service("service_tmp")
+
+    def test_write_on_read_only_file(self):
+        # Make the service file read-only
+        self.service_file_path.chmod(stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+
+        # The decorator should automatically add write permission and succeed
+        write_service_setting("service_1", "port", "9999")
+        conf = service_config("service_1")
+        self.assertEqual(conf["port"], "9999")
+
+        # Verify the file is writable again
+        self.assertTrue(os.access(self.service_file_path, os.W_OK))
 
     def test_missing_file(self):
         another_service_file_path = PGSERVICEPARSER_SRC_PATH / "test" / "data" / "new_folder" / "pgservice.conf"
