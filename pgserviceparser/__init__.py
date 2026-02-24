@@ -2,12 +2,58 @@
 import configparser
 import io
 import platform
+import stat
 from os import getenv
 from pathlib import Path
 from typing import Optional
 
 # package
 from .exceptions import ServiceFileNotFound, ServiceNotFound
+
+
+def _make_file_writable(path: Path):
+    """Attempt to add write permissions to a file.
+
+    Args:
+        path: path to the file
+
+    Raises:
+        PermissionError: when the file permissions cannot be changed
+    """
+    current_permission = stat.S_IMODE(path.stat().st_mode)
+    WRITE = stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
+    path.chmod(current_permission | WRITE)
+
+
+def _when_read_only_try_to_add_write_permission(func):
+    """Decorator for functions that attempt to modify the service file.
+
+    If the file is read-only, a PermissionError exception will be raised.
+    This decorator handles that error by attempting to set write permissions
+    (which works if the user is the owner of the file or has proper rights to
+    alter the file permissions), and rerunning the decorated function.
+
+    If the user cannot modify permissions on the file, the PermissionError
+    is re-raised.
+    """
+
+    def wrapper(*args, **kwargs):
+        attempt = 0
+        while attempt <= 1:
+            try:
+                return func(*args, **kwargs)
+            except PermissionError:
+                if attempt == 1:
+                    raise
+
+                try:
+                    _make_file_writable(conf_path())
+                except PermissionError:
+                    pass
+                finally:
+                    attempt += 1
+
+    return wrapper
 
 
 def conf_path(create_if_missing: Optional[bool] = False) -> Path:
@@ -66,6 +112,7 @@ def full_config(conf_file_path: Optional[Path] = None) -> configparser.ConfigPar
     return config
 
 
+@_when_read_only_try_to_add_write_permission
 def remove_service(service_name: str, conf_file_path: Optional[Path] = None) -> None:
     """Remove a complete service from the service file.
 
@@ -92,6 +139,7 @@ def remove_service(service_name: str, conf_file_path: Optional[Path] = None) -> 
         config.write(configfile, space_around_delimiters=False)
 
 
+@_when_read_only_try_to_add_write_permission
 def rename_service(old_name: str, new_name: str, conf_file_path: Optional[Path] = None) -> None:
     """Rename a service in the service file.
 
@@ -124,6 +172,7 @@ def rename_service(old_name: str, new_name: str, conf_file_path: Optional[Path] 
         config.write(configfile, space_around_delimiters=False)
 
 
+@_when_read_only_try_to_add_write_permission
 def create_service(service_name: str, settings: dict, conf_file_path: Optional[Path] = None) -> bool:
     """Create a new service in the service file.
 
@@ -153,6 +202,7 @@ def create_service(service_name: str, settings: dict, conf_file_path: Optional[P
     return True
 
 
+@_when_read_only_try_to_add_write_permission
 def copy_service_settings(
     source_service_name: str,
     target_service_name: str,
@@ -217,6 +267,7 @@ def service_config(service_name: str, conf_file_path: Optional[Path] = None) -> 
     return dict(config[service_name])
 
 
+@_when_read_only_try_to_add_write_permission
 def write_service_setting(
     service_name: str,
     setting_key: str,
@@ -250,6 +301,7 @@ def write_service_setting(
         config.write(configfile, space_around_delimiters=False)
 
 
+@_when_read_only_try_to_add_write_permission
 def write_service(
     service_name: str, settings: dict, conf_file_path: Optional[Path] = None, create_if_not_found: bool = False
 ) -> dict:
@@ -309,11 +361,13 @@ def write_service_to_text(service_name: str, settings: dict) -> str:
     return res.strip()
 
 
-def service_names(conf_file_path: Optional[Path] = None) -> list[str]:
+def service_names(conf_file_path: Optional[Path] = None, sorted_alphabetically: bool = False) -> list[str]:
     """Returns all service names in a list.
 
     Args:
         conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used, defaults to None
+        sorted_alphabetically: whether to sort the names alphabetically (case-insensitive),
+            defaults to False
 
     Returns:
         list of every service registered
@@ -323,4 +377,5 @@ def service_names(conf_file_path: Optional[Path] = None) -> list[str]:
     """
 
     config = full_config(conf_file_path)
-    return config.sections()
+    names = config.sections()
+    return sorted(names, key=str.lower) if sorted_alphabetically else names

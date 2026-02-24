@@ -57,6 +57,22 @@ class TestLib(unittest.TestCase):
     def test_service_names(self):
         self.assertEqual(service_names(), ["service_1", "service_2", "service_3", "service_4"])
 
+    def test_service_names_sorted_alphabetically(self):
+        # Add a service whose name comes before existing ones alphabetically
+        create_service("Alpha_service", {"host": "localhost"})
+        create_service("zulu_service", {"host": "localhost"})
+
+        # Without sorting, order is as written in the file (appended at the end)
+        names = service_names()
+        self.assertEqual(names[-2:], ["Alpha_service", "zulu_service"])
+
+        # With sorting, names are case-insensitive alphabetical
+        sorted_names = service_names(sorted_alphabetically=True)
+        self.assertEqual(
+            sorted_names,
+            ["Alpha_service", "service_1", "service_2", "service_3", "service_4", "zulu_service"],
+        )
+
     def test_service_config(self):
         self.assertRaises(ServiceNotFound, service_config, "non_existing_service")
 
