@@ -279,6 +279,7 @@ class TestServiceWidget(_TempServiceFileMixin, unittest.TestCase):
 
     def test_show_and_dismiss_message(self):
         w = self._make_widget()
+        w.show()
         w._show_message("Test error", error=True)
         self.assertTrue(w._message_bar.isVisible())
         self.assertIn("Test error", w._lblMessage.text())
