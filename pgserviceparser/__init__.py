@@ -92,6 +92,38 @@ def remove_service(service_name: str, conf_file_path: Optional[Path] = None) -> 
         config.write(configfile, space_around_delimiters=False)
 
 
+def rename_service(old_name: str, new_name: str, conf_file_path: Optional[Path] = None) -> None:
+    """Rename a service in the service file.
+
+    The service settings are preserved under the new name and the old
+    section is removed.
+
+    Args:
+        old_name: current service name
+        new_name: desired service name
+        conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used,
+            defaults to None
+
+    Raises:
+        ServiceFileNotFound: when the service file is not found
+        ServiceNotFound: when the old service is not found
+        PermissionError: when the service file is read-only
+    """
+    config = full_config(conf_file_path)
+    if old_name not in config:
+        raise ServiceNotFound(
+            service_name=old_name,
+            existing_service_names=service_names(),
+            pg_service_filepath=conf_file_path or conf_path(),
+        )
+
+    settings = dict(config[old_name])
+    config.remove_section(old_name)
+    config[new_name] = settings
+    with open(conf_file_path or conf_path(), "w") as configfile:
+        config.write(configfile, space_around_delimiters=False)
+
+
 def service_config(service_name: str, conf_file_path: Optional[Path] = None) -> dict:
     """Returns the config from the given service name as a dict.
 

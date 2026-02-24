@@ -23,6 +23,7 @@ from pgserviceparser import (
     conf_path,
     full_config,
     remove_service,
+    rename_service,
     service_config,
     service_names,
     write_service,
@@ -139,6 +140,28 @@ class TestLib(unittest.TestCase):
         self.assertEqual(new_srv["user"], "rw_gis_user")
 
         new_service_file_path.unlink()
+
+    def test_rename_service(self):
+        with self.assertRaises(ServiceNotFound):
+            rename_service("non_existing_service", "new_name")
+
+        # Rename service_1 -> service_1_renamed
+        original_config = service_config("service_1")
+        rename_service("service_1", "service_1_renamed")
+
+        # Old name should be gone
+        self.assertNotIn("service_1", service_names())
+
+        # New name should exist with the same settings
+        self.assertIn("service_1_renamed", service_names())
+        self.assertEqual(service_config("service_1_renamed"), original_config)
+
+        # No whitespace around delimiters
+        self.assertEqual(
+            open(self.service_file_path).read().find(" = "),
+            -1,
+            "Whitespaces between delimiters were found, but should not be present",
+        )
 
     def test_remove_service(self):
         with self.assertRaises(ServiceNotFound):
