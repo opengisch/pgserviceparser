@@ -31,6 +31,7 @@ QVBoxLayout = QtWidgets.QVBoxLayout
 QWidget = QtWidgets.QWidget
 
 import pgserviceparser
+from pgserviceparser.exceptions import ServiceFileNotFound, ServiceNotFound
 from pgserviceparser.gui.item_delegates import ServiceConfigDelegate
 from pgserviceparser.gui.setting_model import ServiceConfigModel
 from pgserviceparser.service_settings import SERVICE_SETTINGS, SETTINGS_TEMPLATE
@@ -84,6 +85,22 @@ class ServiceWidget(QWidget):
         status_row.addWidget(self.btnCreateServiceFile)
 
         outer.addLayout(status_row)
+
+        # ---- Message bar (dismissible) ----
+        self._message_bar = QWidget()
+        self._message_bar.setVisible(False)
+        msg_layout = QHBoxLayout(self._message_bar)
+        msg_layout.setContentsMargins(4, 2, 4, 2)
+        self._lblMessage = QLabel()
+        self._lblMessage.setWordWrap(True)
+        msg_layout.addWidget(self._lblMessage, 1)
+        self._btnDismiss = QToolButton()
+        self._btnDismiss.setText("\u2715")
+        self._btnDismiss.setAutoRaise(True)
+        self._btnDismiss.setToolTip("Dismiss")
+        self._btnDismiss.clicked.connect(self._dismiss_message)
+        msg_layout.addWidget(self._btnDismiss)
+        outer.addWidget(self._message_bar)
 
         # ---- Main content ----
         self._content_widget = QWidget()
@@ -211,7 +228,12 @@ class ServiceWidget(QWidget):
         self.lstServices.blockSignals(True)
         selected_text = self.lstServices.currentItem().text() if self.lstServices.currentItem() else ""
         self.lstServices.clear()
-        names = pgserviceparser.service_names(self._conf_file_path, sorted_alphabetically=True)
+        try:
+            names = pgserviceparser.service_names(self._conf_file_path, sorted_alphabetically=True)
+        except ServiceFileNotFound:
+            self._service_file_warning()
+            self.lstServices.blockSignals(False)
+            return
         self.lstServices.addItems(names)
         self.lstServices.blockSignals(False)
 
@@ -279,9 +301,17 @@ class ServiceWidget(QWidget):
                 self.lstServices.blockSignals(False)
                 return
 
-        self._edit_model = ServiceConfigModel(
-            service_name, pgserviceparser.service_config(service_name, self._conf_file_path)
-        )
+        try:
+            config = pgserviceparser.service_config(service_name, self._conf_file_path)
+        except ServiceNotFound:
+            self._service_not_found_warning(service_name)
+            self._refresh_service_list()
+            return
+        except ServiceFileNotFound:
+            self._service_file_warning()
+            return
+
+        self._edit_model = ServiceConfigModel(service_name, config)
         self.tblServiceConfig.setModel(self._edit_model)
         self.tblServiceConfig.setItemDelegate(ServiceConfigDelegate(self))
         self.tblServiceConfig.selectionModel().selectionChanged.connect(self._update_settings_buttons)
@@ -304,8 +334,8 @@ class ServiceWidget(QWidget):
         if ok and name:
             try:
                 pgserviceparser.create_service(name, {}, self._conf_file_path)
-            except PermissionError:
-                self._permission_warning()
+            except (PermissionError, ServiceFileNotFound) as e:
+                self._permission_warning() if isinstance(e, PermissionError) else self._service_file_warning()
             else:
                 self._refresh_service_list()
                 items = self.lstServices.findItems(name, Qt.MatchFlag.MatchExactly)
@@ -340,6 +370,11 @@ class ServiceWidget(QWidget):
                 except PermissionError:
                     self._permission_warning()
                     return
+                except ServiceFileNotFound:
+                    self._service_file_warning()
+                    return
+                except ServiceNotFound:
+                    pass  # already gone — continue
 
             self._edit_model = None
             self.tblServiceConfig.setModel(None)
@@ -380,6 +415,11 @@ class ServiceWidget(QWidget):
                 pgserviceparser.rename_service(old_name, new_name, self._conf_file_path)
             except PermissionError:
                 self._permission_warning()
+            except ServiceNotFound:
+                self._service_not_found_warning(old_name)
+                self._refresh_service_list()
+            except ServiceFileNotFound:
+                self._service_file_warning()
             else:
                 self._refresh_service_list()
                 items = self.lstServices.findItems(new_name, Qt.MatchFlag.MatchExactly)
@@ -394,6 +434,11 @@ class ServiceWidget(QWidget):
                 pgserviceparser.copy_service_settings(source_service_name, target_name, self._conf_file_path)
             except PermissionError:
                 self._permission_warning()
+            except ServiceNotFound:
+                self._service_not_found_warning(source_service_name)
+                self._refresh_service_list()
+            except ServiceFileNotFound:
+                self._service_file_warning()
             else:
                 self._refresh_service_list()
                 items = self.lstServices.findItems(target_name, Qt.MatchFlag.MatchExactly)
@@ -457,10 +502,9 @@ class ServiceWidget(QWidget):
         if self._edit_model and self._edit_model.is_dirty():
             invalid = self._edit_model.invalid_settings()
             if invalid:
-                QMessageBox.warning(
-                    self,
-                    "PG service",
-                    f"Settings '{', '.join(invalid)}' have invalid values. " "Adjust them and try again.",
+                self._show_message(
+                    f"Settings '{', '.join(invalid)}' have invalid values. Adjust them and try again.",
+                    error=True,
                 )
                 return
 
@@ -477,14 +521,41 @@ class ServiceWidget(QWidget):
                 )
             except PermissionError:
                 self._permission_warning()
+            except ServiceFileNotFound:
+                self._service_file_warning()
+            except ServiceNotFound:
+                self._service_not_found_warning(target_service)
+                self._refresh_service_list()
             else:
                 self._edit_model.set_not_dirty()
 
     # ---------------------------------------------------------------- Misc --
 
     def _permission_warning(self):
-        QMessageBox.warning(
-            self,
-            "Permission error",
+        self._show_message(
             "The service file is read-only and permissions could not be changed.",
+            error=True,
         )
+
+    def _service_file_warning(self):
+        self._show_message(
+            f"The service file '{self._conf_file_path}' could not be found. " "It may have been moved or deleted.",
+            error=True,
+        )
+
+    def _service_not_found_warning(self, service_name: str):
+        self._show_message(
+            f"The service '{service_name}' no longer exists in the configuration file. "
+            "The service list has been refreshed.",
+            error=True,
+        )
+
+    def _show_message(self, text: str, error: bool = False):
+        color = "#f8d7da" if error else "#d4edda"
+        border = "#f5c6cb" if error else "#c3e6cb"
+        self._message_bar.setStyleSheet(f"background-color: {color}; border: 1px solid {border}; border-radius: 4px;")
+        self._lblMessage.setText(text)
+        self._message_bar.setVisible(True)
+
+    def _dismiss_message(self):
+        self._message_bar.setVisible(False)
