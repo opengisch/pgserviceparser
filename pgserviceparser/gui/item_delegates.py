@@ -9,8 +9,7 @@ QLineEdit = QtWidgets.QLineEdit
 QStyledItemDelegate = QtWidgets.QStyledItemDelegate
 QWidget = QtWidgets.QWidget
 
-from pgserviceparser.service_settings import WidgetType
-
+from ..service_settings import WidgetType
 from .setting_model import _ServiceConfigModel
 
 

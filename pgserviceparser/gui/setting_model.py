@@ -9,7 +9,7 @@ pyqtSignal = QtCore.pyqtSignal
 QColor = QtGui.QColor
 QFont = QtGui.QFont
 
-from pgserviceparser.service_settings import SERVICE_SETTINGS, WidgetType
+from ..service_settings import SERVICE_SETTINGS, WidgetType
 
 
 class _ServiceConfigModel(QAbstractTableModel):

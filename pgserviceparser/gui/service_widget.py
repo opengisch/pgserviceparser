@@ -29,10 +29,19 @@ QToolButton = QtWidgets.QToolButton
 QVBoxLayout = QtWidgets.QVBoxLayout
 QWidget = QtWidgets.QWidget
 
-import pgserviceparser
-from pgserviceparser.exceptions import ServiceFileNotFound, ServiceNotFound
-from pgserviceparser.service_settings import SERVICE_SETTINGS, SETTINGS_TEMPLATE
-
+from .. import (
+    conf_path,
+    copy_service_settings,
+    create_service,
+    remove_service,
+    rename_service,
+    service_config,
+    service_names,
+    write_service,
+    write_service_to_text,
+)
+from ..exceptions import ServiceFileNotFound, ServiceNotFound
+from ..service_settings import SERVICE_SETTINGS, SETTINGS_TEMPLATE
 from .item_delegates import _ServiceConfigDelegate
 from .setting_model import _ServiceConfigModel
 
@@ -60,7 +69,7 @@ class PGServiceParserWidget(QWidget):
             parent: Optional parent widget.
         """
         super().__init__(parent)
-        self._conf_file_path = conf_file_path or pgserviceparser.conf_path()
+        self._conf_file_path = conf_file_path or conf_path()
         self._edit_model: _ServiceConfigModel | None = None
         self._new_empty_file = False
 
@@ -112,24 +121,43 @@ class PGServiceParserWidget(QWidget):
 
         # ---- Main content ----
         self._content_widget = QWidget()
-        root = QHBoxLayout(self._content_widget)
-        root.setContentsMargins(0, 0, 0, 0)
+        content_layout = QVBoxLayout(self._content_widget)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(2)
 
-        # ---- Left: service list + buttons ----
-        left = QVBoxLayout()
+        # ---- Top toolbar: service buttons (left) | settings buttons (right) ----
+        toolbar_row = QHBoxLayout()
 
-        btn_row = QHBoxLayout()
         self.btnAddService = QToolButton()
         self.btnAddService.setIcon(icon_add())
         self.btnAddService.setToolTip("Add a new service")
+        self.btnAddService.setFixedSize(24, 24)
         self.btnRemoveService = QToolButton()
         self.btnRemoveService.setIcon(icon_remove())
         self.btnRemoveService.setToolTip("Remove selected service(s)")
+        self.btnRemoveService.setFixedSize(24, 24)
         self.btnRemoveService.setEnabled(False)
-        btn_row.addWidget(self.btnAddService)
-        btn_row.addWidget(self.btnRemoveService)
-        btn_row.addStretch()
-        left.addLayout(btn_row)
+        toolbar_row.addWidget(self.btnAddService)
+        toolbar_row.addWidget(self.btnRemoveService)
+
+        toolbar_row.addStretch()
+
+        self.btnAddSettings = QToolButton()
+        self.btnAddSettings.setIcon(icon_add())
+        self.btnAddSettings.setToolTip("Add settings to current service")
+        self.btnAddSettings.setFixedSize(24, 24)
+        self.btnRemoveSetting = QToolButton()
+        self.btnRemoveSetting.setIcon(icon_remove())
+        self.btnRemoveSetting.setToolTip("Remove setting from current service")
+        self.btnRemoveSetting.setFixedSize(24, 24)
+        self.btnRemoveSetting.setEnabled(False)
+        toolbar_row.addWidget(self.btnAddSettings)
+        toolbar_row.addWidget(self.btnRemoveSetting)
+
+        content_layout.addLayout(toolbar_row)
+
+        # ---- Middle: service list (left) | settings editor (right) ----
+        mid_row = QHBoxLayout()
 
         self.lstServices = QListWidget()
         self.lstServices.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
@@ -138,16 +166,13 @@ class PGServiceParserWidget(QWidget):
         self.lstServices.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Expanding)
         self.lstServices.setMinimumWidth(120)
         self.lstServices.setMaximumWidth(200)
-        left.addWidget(self.lstServices)
-
-        root.addLayout(left, 0)
 
         # ---- Right: settings editor ----
         self.editRightPanel = QWidget()
         right = QVBoxLayout(self.editRightPanel)
         right.setContentsMargins(0, 0, 0, 0)
+        right.setSpacing(2)
 
-        table_row = QHBoxLayout()
         self.tblServiceConfig = QTableView()
         self.tblServiceConfig.setEditTriggers(
             QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.EditKeyPressed
@@ -158,24 +183,7 @@ class PGServiceParserWidget(QWidget):
         self.tblServiceConfig.horizontalHeader().setVisible(False)
         self.tblServiceConfig.horizontalHeader().setStretchLastSection(True)
         self.tblServiceConfig.verticalHeader().setVisible(False)
-        table_row.addWidget(self.tblServiceConfig)
-
-        setting_btns = QVBoxLayout()
-        self.btnAddSettings = QPushButton()
-        self.btnAddSettings.setIcon(icon_add())
-        self.btnAddSettings.setToolTip("Add settings to current service")
-        self.btnAddSettings.setFixedSize(28, 28)
-        self.btnRemoveSetting = QPushButton()
-        self.btnRemoveSetting.setIcon(icon_remove())
-        self.btnRemoveSetting.setToolTip("Remove setting from current service")
-        self.btnRemoveSetting.setFixedSize(28, 28)
-        self.btnRemoveSetting.setEnabled(False)
-        setting_btns.addWidget(self.btnAddSettings)
-        setting_btns.addWidget(self.btnRemoveSetting)
-        setting_btns.addStretch()
-        table_row.addLayout(setting_btns)
-
-        right.addLayout(table_row)
+        right.addWidget(self.tblServiceConfig)
 
         bottom_row = QHBoxLayout()
         bottom_row.addStretch()
@@ -189,7 +197,19 @@ class PGServiceParserWidget(QWidget):
         bottom_row.addWidget(self.btnUpdateService)
         right.addLayout(bottom_row)
 
-        root.addWidget(self.editRightPanel, 1)
+        # Left column: list + spacer matching the bottom_row height
+        left_col = QVBoxLayout()
+        left_col.setContentsMargins(0, 0, 0, 0)
+        left_col.setSpacing(2)
+        left_col.addWidget(self.lstServices)
+        # Spacer with fixed height to align list bottom with table bottom
+        self._left_bottom_spacer = QWidget()
+        self._left_bottom_spacer.setFixedHeight(self.btnUpdateService.sizeHint().height())
+        left_col.addWidget(self._left_bottom_spacer)
+
+        mid_row.addLayout(left_col, 0)
+        mid_row.addWidget(self.editRightPanel, 1)
+        content_layout.addLayout(mid_row)
 
         outer.addWidget(self._content_widget)
         self._set_edit_panel_enabled(False)
@@ -237,7 +257,7 @@ class PGServiceParserWidget(QWidget):
         selected_text = self.lstServices.currentItem().text() if self.lstServices.currentItem() else ""
         self.lstServices.clear()
         try:
-            names = pgserviceparser.service_names(self._conf_file_path, sorted_alphabetically=True)
+            names = service_names(self._conf_file_path, sorted_alphabetically=True)
         except ServiceFileNotFound:
             self._service_file_warning()
             self.lstServices.blockSignals(False)
@@ -262,9 +282,9 @@ class PGServiceParserWidget(QWidget):
         name, ok = QInputDialog.getText(self, "New service", "Enter a service name:")
         name = name.strip().replace(" ", "-") if name else ""
         if ok and name:
-            self._conf_file_path = pgserviceparser.conf_path(create_if_missing=True)
+            self._conf_file_path = conf_path(create_if_missing=True)
             try:
-                pgserviceparser.create_service(name, {}, self._conf_file_path)
+                create_service(name, {}, self._conf_file_path)
             except PermissionError:
                 self._permission_warning()
             else:
@@ -310,7 +330,7 @@ class PGServiceParserWidget(QWidget):
                 return
 
         try:
-            config = pgserviceparser.service_config(service_name, self._conf_file_path)
+            config = service_config(service_name, self._conf_file_path)
         except ServiceNotFound:
             self._service_not_found_warning(service_name)
             self._refresh_service_list()
@@ -341,7 +361,7 @@ class PGServiceParserWidget(QWidget):
         name = name.strip().replace(" ", "-") if name else ""
         if ok and name:
             try:
-                pgserviceparser.create_service(name, {}, self._conf_file_path)
+                create_service(name, {}, self._conf_file_path)
             except (PermissionError, ServiceFileNotFound) as e:
                 self._permission_warning() if isinstance(e, PermissionError) else self._service_file_warning()
             else:
@@ -374,7 +394,7 @@ class PGServiceParserWidget(QWidget):
         ):
             for name in names:
                 try:
-                    pgserviceparser.remove_service(name, self._conf_file_path)
+                    remove_service(name, self._conf_file_path)
                 except PermissionError:
                     self._permission_warning()
                     return
@@ -420,7 +440,7 @@ class PGServiceParserWidget(QWidget):
         new_name = new_name.strip().replace(" ", "-") if new_name else ""
         if ok and new_name and new_name != old_name:
             try:
-                pgserviceparser.rename_service(old_name, new_name, self._conf_file_path)
+                rename_service(old_name, new_name, self._conf_file_path)
             except PermissionError:
                 self._permission_warning()
             except ServiceNotFound:
@@ -439,7 +459,7 @@ class PGServiceParserWidget(QWidget):
         target_name = target_name.strip().replace(" ", "-") if target_name else ""
         if ok and target_name:
             try:
-                pgserviceparser.copy_service_settings(source_service_name, target_name, self._conf_file_path)
+                copy_service_settings(source_service_name, target_name, self._conf_file_path)
             except PermissionError:
                 self._permission_warning()
             except ServiceNotFound:
@@ -502,7 +522,7 @@ class PGServiceParserWidget(QWidget):
             return
 
         service_name = selected_items[0].text()
-        settings_text = pgserviceparser.write_service_to_text(service_name, self._edit_model.service_config())
+        settings_text = write_service_to_text(service_name, self._edit_model.service_config())
         QApplication.clipboard().setText(settings_text)
 
     @pyqtSlot()
@@ -522,7 +542,7 @@ class PGServiceParserWidget(QWidget):
 
             target_service = selected_items[0].text()
             try:
-                pgserviceparser.write_service(
+                write_service(
                     target_service,
                     self._edit_model.service_config(),
                     self._conf_file_path,
