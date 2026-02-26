@@ -112,24 +112,43 @@ class PGServiceParserWidget(QWidget):
 
         # ---- Main content ----
         self._content_widget = QWidget()
-        root = QHBoxLayout(self._content_widget)
-        root.setContentsMargins(0, 0, 0, 0)
+        content_layout = QVBoxLayout(self._content_widget)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(2)
 
-        # ---- Left: service list + buttons ----
-        left = QVBoxLayout()
+        # ---- Top toolbar: service buttons (left) | settings buttons (right) ----
+        toolbar_row = QHBoxLayout()
 
-        btn_row = QHBoxLayout()
         self.btnAddService = QToolButton()
         self.btnAddService.setIcon(icon_add())
         self.btnAddService.setToolTip("Add a new service")
+        self.btnAddService.setFixedSize(24, 24)
         self.btnRemoveService = QToolButton()
         self.btnRemoveService.setIcon(icon_remove())
         self.btnRemoveService.setToolTip("Remove selected service(s)")
+        self.btnRemoveService.setFixedSize(24, 24)
         self.btnRemoveService.setEnabled(False)
-        btn_row.addWidget(self.btnAddService)
-        btn_row.addWidget(self.btnRemoveService)
-        btn_row.addStretch()
-        left.addLayout(btn_row)
+        toolbar_row.addWidget(self.btnAddService)
+        toolbar_row.addWidget(self.btnRemoveService)
+
+        toolbar_row.addStretch()
+
+        self.btnAddSettings = QToolButton()
+        self.btnAddSettings.setIcon(icon_add())
+        self.btnAddSettings.setToolTip("Add settings to current service")
+        self.btnAddSettings.setFixedSize(24, 24)
+        self.btnRemoveSetting = QToolButton()
+        self.btnRemoveSetting.setIcon(icon_remove())
+        self.btnRemoveSetting.setToolTip("Remove setting from current service")
+        self.btnRemoveSetting.setFixedSize(24, 24)
+        self.btnRemoveSetting.setEnabled(False)
+        toolbar_row.addWidget(self.btnAddSettings)
+        toolbar_row.addWidget(self.btnRemoveSetting)
+
+        content_layout.addLayout(toolbar_row)
+
+        # ---- Middle: service list (left) | settings editor (right) ----
+        mid_row = QHBoxLayout()
 
         self.lstServices = QListWidget()
         self.lstServices.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
@@ -138,16 +157,13 @@ class PGServiceParserWidget(QWidget):
         self.lstServices.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Expanding)
         self.lstServices.setMinimumWidth(120)
         self.lstServices.setMaximumWidth(200)
-        left.addWidget(self.lstServices)
-
-        root.addLayout(left, 0)
 
         # ---- Right: settings editor ----
         self.editRightPanel = QWidget()
         right = QVBoxLayout(self.editRightPanel)
         right.setContentsMargins(0, 0, 0, 0)
+        right.setSpacing(2)
 
-        table_row = QHBoxLayout()
         self.tblServiceConfig = QTableView()
         self.tblServiceConfig.setEditTriggers(
             QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.EditKeyPressed
@@ -158,24 +174,7 @@ class PGServiceParserWidget(QWidget):
         self.tblServiceConfig.horizontalHeader().setVisible(False)
         self.tblServiceConfig.horizontalHeader().setStretchLastSection(True)
         self.tblServiceConfig.verticalHeader().setVisible(False)
-        table_row.addWidget(self.tblServiceConfig)
-
-        setting_btns = QVBoxLayout()
-        self.btnAddSettings = QPushButton()
-        self.btnAddSettings.setIcon(icon_add())
-        self.btnAddSettings.setToolTip("Add settings to current service")
-        self.btnAddSettings.setFixedSize(28, 28)
-        self.btnRemoveSetting = QPushButton()
-        self.btnRemoveSetting.setIcon(icon_remove())
-        self.btnRemoveSetting.setToolTip("Remove setting from current service")
-        self.btnRemoveSetting.setFixedSize(28, 28)
-        self.btnRemoveSetting.setEnabled(False)
-        setting_btns.addWidget(self.btnAddSettings)
-        setting_btns.addWidget(self.btnRemoveSetting)
-        setting_btns.addStretch()
-        table_row.addLayout(setting_btns)
-
-        right.addLayout(table_row)
+        right.addWidget(self.tblServiceConfig)
 
         bottom_row = QHBoxLayout()
         bottom_row.addStretch()
@@ -189,7 +188,19 @@ class PGServiceParserWidget(QWidget):
         bottom_row.addWidget(self.btnUpdateService)
         right.addLayout(bottom_row)
 
-        root.addWidget(self.editRightPanel, 1)
+        # Left column: list + spacer matching the bottom_row height
+        left_col = QVBoxLayout()
+        left_col.setContentsMargins(0, 0, 0, 0)
+        left_col.setSpacing(2)
+        left_col.addWidget(self.lstServices)
+        # Spacer with fixed height to align list bottom with table bottom
+        self._left_bottom_spacer = QWidget()
+        self._left_bottom_spacer.setFixedHeight(self.btnUpdateService.sizeHint().height())
+        left_col.addWidget(self._left_bottom_spacer)
+
+        mid_row.addLayout(left_col, 0)
+        mid_row.addWidget(self.editRightPanel, 1)
+        content_layout.addLayout(mid_row)
 
         outer.addWidget(self._content_widget)
         self._set_edit_panel_enabled(False)
