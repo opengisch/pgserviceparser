@@ -29,10 +29,19 @@ QToolButton = QtWidgets.QToolButton
 QVBoxLayout = QtWidgets.QVBoxLayout
 QWidget = QtWidgets.QWidget
 
-import pgserviceparser
-from pgserviceparser.exceptions import ServiceFileNotFound, ServiceNotFound
-from pgserviceparser.service_settings import SERVICE_SETTINGS, SETTINGS_TEMPLATE
-
+from .. import (
+    conf_path,
+    copy_service_settings,
+    create_service,
+    remove_service,
+    rename_service,
+    service_config,
+    service_names,
+    write_service,
+    write_service_to_text,
+)
+from ..exceptions import ServiceFileNotFound, ServiceNotFound
+from ..service_settings import SERVICE_SETTINGS, SETTINGS_TEMPLATE
 from .item_delegates import _ServiceConfigDelegate
 from .setting_model import _ServiceConfigModel
 
@@ -60,7 +69,7 @@ class PGServiceParserWidget(QWidget):
             parent: Optional parent widget.
         """
         super().__init__(parent)
-        self._conf_file_path = conf_file_path or pgserviceparser.conf_path()
+        self._conf_file_path = conf_file_path or conf_path()
         self._edit_model: _ServiceConfigModel | None = None
         self._new_empty_file = False
 
@@ -248,7 +257,7 @@ class PGServiceParserWidget(QWidget):
         selected_text = self.lstServices.currentItem().text() if self.lstServices.currentItem() else ""
         self.lstServices.clear()
         try:
-            names = pgserviceparser.service_names(self._conf_file_path, sorted_alphabetically=True)
+            names = service_names(self._conf_file_path, sorted_alphabetically=True)
         except ServiceFileNotFound:
             self._service_file_warning()
             self.lstServices.blockSignals(False)
@@ -273,9 +282,9 @@ class PGServiceParserWidget(QWidget):
         name, ok = QInputDialog.getText(self, "New service", "Enter a service name:")
         name = name.strip().replace(" ", "-") if name else ""
         if ok and name:
-            self._conf_file_path = pgserviceparser.conf_path(create_if_missing=True)
+            self._conf_file_path = conf_path(create_if_missing=True)
             try:
-                pgserviceparser.create_service(name, {}, self._conf_file_path)
+                create_service(name, {}, self._conf_file_path)
             except PermissionError:
                 self._permission_warning()
             else:
@@ -321,7 +330,7 @@ class PGServiceParserWidget(QWidget):
                 return
 
         try:
-            config = pgserviceparser.service_config(service_name, self._conf_file_path)
+            config = service_config(service_name, self._conf_file_path)
         except ServiceNotFound:
             self._service_not_found_warning(service_name)
             self._refresh_service_list()
@@ -352,7 +361,7 @@ class PGServiceParserWidget(QWidget):
         name = name.strip().replace(" ", "-") if name else ""
         if ok and name:
             try:
-                pgserviceparser.create_service(name, {}, self._conf_file_path)
+                create_service(name, {}, self._conf_file_path)
             except (PermissionError, ServiceFileNotFound) as e:
                 self._permission_warning() if isinstance(e, PermissionError) else self._service_file_warning()
             else:
@@ -385,7 +394,7 @@ class PGServiceParserWidget(QWidget):
         ):
             for name in names:
                 try:
-                    pgserviceparser.remove_service(name, self._conf_file_path)
+                    remove_service(name, self._conf_file_path)
                 except PermissionError:
                     self._permission_warning()
                     return
@@ -431,7 +440,7 @@ class PGServiceParserWidget(QWidget):
         new_name = new_name.strip().replace(" ", "-") if new_name else ""
         if ok and new_name and new_name != old_name:
             try:
-                pgserviceparser.rename_service(old_name, new_name, self._conf_file_path)
+                rename_service(old_name, new_name, self._conf_file_path)
             except PermissionError:
                 self._permission_warning()
             except ServiceNotFound:
@@ -450,7 +459,7 @@ class PGServiceParserWidget(QWidget):
         target_name = target_name.strip().replace(" ", "-") if target_name else ""
         if ok and target_name:
             try:
-                pgserviceparser.copy_service_settings(source_service_name, target_name, self._conf_file_path)
+                copy_service_settings(source_service_name, target_name, self._conf_file_path)
             except PermissionError:
                 self._permission_warning()
             except ServiceNotFound:
@@ -513,7 +522,7 @@ class PGServiceParserWidget(QWidget):
             return
 
         service_name = selected_items[0].text()
-        settings_text = pgserviceparser.write_service_to_text(service_name, self._edit_model.service_config())
+        settings_text = write_service_to_text(service_name, self._edit_model.service_config())
         QApplication.clipboard().setText(settings_text)
 
     @pyqtSlot()
@@ -533,7 +542,7 @@ class PGServiceParserWidget(QWidget):
 
             target_service = selected_items[0].text()
             try:
-                pgserviceparser.write_service(
+                write_service(
                     target_service,
                     self._edit_model.service_config(),
                     self._conf_file_path,
