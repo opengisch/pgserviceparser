@@ -357,6 +357,20 @@ class PGServiceParserWidget(QWidget):
 
     @pyqtSlot()
     def _add_service_clicked(self):
+        if self._edit_model and self._edit_model.is_dirty():
+            if (
+                QMessageBox.question(
+                    self,
+                    "Pending edits",
+                    f"There are pending edits for service '{self._edit_model.service_name()}'. "
+                    "Are you sure you want to discard them?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No,
+                )
+                != QMessageBox.StandardButton.Yes
+            ):
+                return
+
         name, ok = QInputDialog.getText(self, "New service", "Enter a service name:")
         name = name.strip().replace(" ", "-") if name else ""
         if ok and name:
