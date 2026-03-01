@@ -307,6 +307,7 @@ class PGServiceParserWidget(QWidget):
             self.tblServiceConfig.setModel(None)
             self._set_edit_panel_enabled(False)
             self.btnUpdateService.setDisabled(True)
+            self.btnRemoveSetting.setEnabled(False)
             self._update_add_settings_button()
 
     def _edit_service_selected(self, service_name: str):
