@@ -181,7 +181,7 @@ class PGServiceParserWidget(QWidget):
         self.tblServiceConfig.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.tblServiceConfig.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.tblServiceConfig.horizontalHeader().setVisible(False)
-        self.tblServiceConfig.horizontalHeader().setStretchLastSection(True)
+        self.tblServiceConfig.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.tblServiceConfig.verticalHeader().setVisible(False)
         right.addWidget(self.tblServiceConfig)
 
@@ -307,6 +307,7 @@ class PGServiceParserWidget(QWidget):
             self.tblServiceConfig.setModel(None)
             self._set_edit_panel_enabled(False)
             self.btnUpdateService.setDisabled(True)
+            self.btnRemoveSetting.setEnabled(False)
             self._update_add_settings_button()
 
     def _edit_service_selected(self, service_name: str):
@@ -357,6 +358,20 @@ class PGServiceParserWidget(QWidget):
 
     @pyqtSlot()
     def _add_service_clicked(self):
+        if self._edit_model and self._edit_model.is_dirty():
+            if (
+                QMessageBox.question(
+                    self,
+                    "Pending edits",
+                    f"There are pending edits for service '{self._edit_model.service_name()}'. "
+                    "Are you sure you want to discard them?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No,
+                )
+                != QMessageBox.StandardButton.Yes
+            ):
+                return
+
         name, ok = QInputDialog.getText(self, "New service", "Enter a service name:")
         name = name.strip().replace(" ", "-") if name else ""
         if ok and name:
