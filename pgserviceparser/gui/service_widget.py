@@ -181,7 +181,7 @@ class PGServiceParserWidget(QWidget):
         self.tblServiceConfig.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.tblServiceConfig.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.tblServiceConfig.horizontalHeader().setVisible(False)
-        self.tblServiceConfig.horizontalHeader().setStretchLastSection(True)
+        self.tblServiceConfig.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.tblServiceConfig.verticalHeader().setVisible(False)
         right.addWidget(self.tblServiceConfig)
 
