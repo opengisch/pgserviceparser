@@ -1,4 +1,6 @@
 site_name: pgserviceparser documentation
+repo_url: https://github.com/opengisch/pgserviceparser
+repo_name: opengisch/pgserviceparser
 theme:
   name: "material"
   logo: assets/images/logo.png
