@@ -25,4 +25,5 @@ nav:
       - Reference: api.md
       - Exceptions: exceptions.md
       - PGServiceParserWidget: pgserviceparser_widget.md
+      - MessageBar: message_bar.md
   - GUI: gui.md

@@ -37,6 +37,9 @@ The main window displays two panels:
 - **Service list** (left) — all services found in the active `pg_service.conf` file.
 - **Settings editor** (right) — key/value pairs for the selected service.
 
+A message bar at the top displays success, warning, and error notifications. Success
+messages auto-dismiss after 5 seconds, while warnings and errors require manual dismissal.
+
 ![Overview](assets/images/screenshots/01_overview.png)
 
 ## Managing services
