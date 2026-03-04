@@ -31,6 +31,14 @@ except ImportError:
 
 
 class MessageLevel(IntEnum):
+    """Message severity levels for the message bar.
+
+    Attributes:
+        SUCCESS: Success message (green) - auto-dismisses after 5 seconds.
+        WARNING: Warning message (yellow) - requires manual dismissal.
+        ERROR: Error message (red) - requires manual dismissal.
+    """
+
     SUCCESS = 0
     WARNING = 1
     ERROR = 2
@@ -234,11 +242,44 @@ _QGIS_SUCCESS_DURATION_S = 5
 
 
 class MessageBar(QWidget):
-    """A container widget that stacks message items at the top of a dialog.
+    """A container widget for displaying success, warning, and error messages.
 
-    When running inside QGIS, delegates to ``QgsMessageBar`` for native
-    look-and-feel.  Falls back to a custom scroll-area implementation
-    otherwise (e.g. standalone mode).
+    The message bar displays stacked notification messages with automatic
+    dismissal for success messages and manual dismissal for warnings/errors.
+
+    **QGIS Integration**: When running inside QGIS, this widget automatically
+    delegates to ``QgsMessageBar`` for native look-and-feel. Otherwise, it
+    uses a custom scrollable implementation for standalone applications.
+
+    Example:
+        Basic usage in a custom Qt widget::
+
+            from pgserviceparser.gui import MessageBar, MessageLevel
+
+            # In your widget's __init__:
+            self.message_bar = MessageBar()
+            layout.addWidget(self.message_bar)
+
+            # Show messages:
+            self.message_bar.pushSuccess("Operation completed successfully")
+            self.message_bar.pushWarning("This is a warning")
+            self.message_bar.pushError("An error occurred")
+
+        With exception details::
+
+            try:
+                risky_operation()
+            except Exception as e:
+                self.message_bar.pushError("Operation failed", exception=e)
+
+        Using static helpers from child widgets::
+
+            # Any child widget can push messages without holding a reference
+            MessageBar.pushSuccessToBar(self, "Settings saved")
+
+    The message bar maintains a fixed height and becomes scrollable when
+    multiple messages are displayed. Success messages auto-dismiss after
+    5 seconds with a countdown progress bar.
     """
 
     def __init__(self, parent=None):
@@ -286,10 +327,22 @@ class MessageBar(QWidget):
 
         Args:
             text: The message text to display.
-            level: MessageLevel.SUCCESS (auto-dismiss 5 s),
-                   MessageLevel.WARNING or MessageLevel.ERROR (manual dismiss).
-            exception: Optional exception. When provided a *Details* button is
-                       shown that opens a dialog with the full traceback.
+            level: Message severity level. Defaults to ``MessageLevel.SUCCESS``.
+                Success messages auto-dismiss after 5 seconds. Warning and
+                error messages require manual dismissal.
+            exception: Optional exception object. When provided, a **Details**
+                button is shown that opens a dialog with the full traceback.
+
+        Example:
+            >>> message_bar.pushMessage(
+            ...     "File saved successfully",
+            ...     level=MessageLevel.SUCCESS
+            ... )
+            >>> message_bar.pushMessage(
+            ...     "Could not write file",
+            ...     level=MessageLevel.ERROR,
+            ...     exception=exc
+            ... )
         """
         if self._use_qgs:
             qgis_level = _QGIS_LEVEL_MAP[level]
@@ -306,12 +359,29 @@ class MessageBar(QWidget):
             QTimer.singleShot(0, self._scroll_to_bottom)
 
     def pushSuccess(self, text: str):
+        """Add a success message (green, auto-dismisses after 5 seconds).
+
+        Args:
+            text: The message text to display.
+        """
         self.pushMessage(text, MessageLevel.SUCCESS)
 
     def pushWarning(self, text: str):
+        """Add a warning message (yellow, manual dismissal required).
+
+        Args:
+            text: The message text to display.
+        """
         self.pushMessage(text, MessageLevel.WARNING)
 
     def pushError(self, text: str, exception: Exception | None = None):
+        """Add an error message (red, manual dismissal required).
+
+        Args:
+            text: The message text to display.
+            exception: Optional exception object. When provided, a **Details**
+                button is shown that opens a dialog with the full traceback.
+        """
         self.pushMessage(text, MessageLevel.ERROR, exception=exception)
 
     def clearAll(self):
@@ -349,8 +419,20 @@ class MessageBar(QWidget):
     def findMessageBar(widget):
         """Walk up the widget tree to find the nearest MessageBar.
 
-        This allows any child widget to push messages without holding a direct reference.
-        Returns None if no message bar is found.
+        This allows any child widget to push messages without holding a
+        direct reference to the message bar.
+
+        Args:
+            widget: A Qt widget to start searching from.
+
+        Returns:
+            The nearest :class:`MessageBar` ancestor, or ``None`` if not found.
+
+        Example:
+            >>> # From any child widget:
+            >>> bar = MessageBar.findMessageBar(self)
+            >>> if bar:
+            ...     bar.pushSuccess("Operation completed")
         """
         from .service_widget import PGServiceParserWidget
 
@@ -377,9 +459,22 @@ class MessageBar(QWidget):
     def pushErrorToBar(widget, text: str, exception=None):
         """Push an error message from any child widget to the message bar.
 
-        If *exception* is not None its string representation is appended to
-        the visible text and a *Details* button is added to view the full
-        traceback.
+        This is a convenience method that automatically finds the nearest
+        message bar in the widget hierarchy and displays an error message.
+
+        Args:
+            widget: A Qt widget that is a descendant of a widget containing
+                a :class:`MessageBar`.
+            text: The error message text to display.
+            exception: Optional exception object. When provided, a **Details**
+                button is shown that opens a dialog with the full traceback.
+
+        Example:
+            >>> # From anywhere in your widget hierarchy:
+            >>> try:
+            ...     process_data()
+            ... except Exception as e:
+            ...     MessageBar.pushErrorToBar(self, "Processing failed", e)
         """
         bar = MessageBar.findMessageBar(widget)
         if bar:
@@ -390,14 +485,38 @@ class MessageBar(QWidget):
 
     @staticmethod
     def pushWarningToBar(widget, text: str):
-        """Push a warning message from any child widget to the message bar."""
+        """Push a warning message from any child widget to the message bar.
+
+        This is a convenience method that automatically finds the nearest
+        message bar in the widget hierarchy and displays a warning message.
+
+        Args:
+            widget: A Qt widget that is a descendant of a widget containing
+                a :class:`MessageBar`.
+            text: The warning message text to display.
+
+        Example:
+            >>> MessageBar.pushWarningToBar(self, "Configuration incomplete")
+        """
         bar = MessageBar.findMessageBar(widget)
         if bar:
             bar.pushWarning(text)
 
     @staticmethod
     def pushSuccessToBar(widget, text: str):
-        """Push a success message from any child widget to the message bar."""
+        """Push a success message from any child widget to the message bar.
+
+        This is a convenience method that automatically finds the nearest
+        message bar in the widget hierarchy and displays a success message.
+
+        Args:
+            widget: A Qt widget that is a descendant of a widget containing
+                a :class:`MessageBar`.
+            text: The success message text to display.
+
+        Example:
+            >>> MessageBar.pushSuccessToBar(self, "Settings saved successfully")
+        """
         bar = MessageBar.findMessageBar(widget)
         if bar:
             bar.pushSuccess(text)
