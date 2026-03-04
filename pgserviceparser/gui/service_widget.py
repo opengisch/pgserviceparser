@@ -43,6 +43,7 @@ from .. import (
 from ..exceptions import ServiceFileNotFound, ServiceNotFound
 from ..service_settings import SERVICE_SETTINGS, SETTINGS_TEMPLATE
 from .item_delegates import _ServiceConfigDelegate
+from .message_bar import MessageBar
 from .setting_model import _ServiceConfigModel
 
 _IMAGES_DIR = Path(__file__).parent / "images"
@@ -103,20 +104,8 @@ class PGServiceParserWidget(QWidget):
 
         outer.addLayout(status_row)
 
-        # ---- Message bar (dismissible) ----
-        self._message_bar = QWidget()
-        self._message_bar.setVisible(False)
-        msg_layout = QHBoxLayout(self._message_bar)
-        msg_layout.setContentsMargins(4, 2, 4, 2)
-        self._lblMessage = QLabel()
-        self._lblMessage.setWordWrap(True)
-        msg_layout.addWidget(self._lblMessage, 1)
-        self._btnDismiss = QToolButton()
-        self._btnDismiss.setText("\u2715")
-        self._btnDismiss.setAutoRaise(True)
-        self._btnDismiss.setToolTip("Dismiss")
-        self._btnDismiss.clicked.connect(self._dismiss_message)
-        msg_layout.addWidget(self._btnDismiss)
+        # ---- Message bar ----
+        self._message_bar = MessageBar()
         outer.addWidget(self._message_bar)
 
         # ---- Main content ----
@@ -290,6 +279,7 @@ class PGServiceParserWidget(QWidget):
             else:
                 self._new_empty_file = True
                 self._initialize()
+                self._show_message(f"Config file created with service '{name}'.")
 
     # ---------------------------------------------------- Service list ops --
 
@@ -384,6 +374,7 @@ class PGServiceParserWidget(QWidget):
                 items = self.lstServices.findItems(name, Qt.MatchFlag.MatchExactly)
                 if items:
                     self.lstServices.setCurrentItem(items[0])
+                self._show_message(f"Service '{name}' created successfully.")
 
     @pyqtSlot()
     def _remove_service_clicked(self):
@@ -423,6 +414,10 @@ class PGServiceParserWidget(QWidget):
             self.tblServiceConfig.setModel(None)
             self._set_edit_panel_enabled(False)
             self._refresh_service_list()
+            if len(names) == 1:
+                self._show_message(f"Service '{names[0]}' removed successfully.")
+            else:
+                self._show_message(f"{len(names)} services removed successfully.")
 
     @pyqtSlot("QPoint")
     def _service_list_context_menu(self, pos):
@@ -468,6 +463,7 @@ class PGServiceParserWidget(QWidget):
                 items = self.lstServices.findItems(new_name, Qt.MatchFlag.MatchExactly)
                 if items:
                     self.lstServices.setCurrentItem(items[0])
+                self._show_message(f"Service renamed from '{old_name}' to '{new_name}'.")
 
     def _duplicate_and_edit_service(self, source_service_name: str):
         target_name, ok = QInputDialog.getText(self, "Duplicate service", "Enter a name for the copy:")
@@ -487,6 +483,7 @@ class PGServiceParserWidget(QWidget):
                 items = self.lstServices.findItems(target_name, Qt.MatchFlag.MatchExactly)
                 if items:
                     self.lstServices.setCurrentItem(items[0])
+                self._show_message(f"Service '{source_service_name}' duplicated as '{target_name}'.")
 
     # ------------------------------------------------------- Settings ops --
 
@@ -571,6 +568,7 @@ class PGServiceParserWidget(QWidget):
                 self._refresh_service_list()
             else:
                 self._edit_model.set_not_dirty()
+                self._show_message(f"Service '{target_service}' updated successfully.")
 
     # ---------------------------------------------------------------- Misc --
 
@@ -594,11 +592,7 @@ class PGServiceParserWidget(QWidget):
         )
 
     def _show_message(self, text: str, error: bool = False):
-        color = "#f8d7da" if error else "#d4edda"
-        border = "#f5c6cb" if error else "#c3e6cb"
-        self._message_bar.setStyleSheet(f"background-color: {color}; border: 1px solid {border}; border-radius: 4px;")
-        self._lblMessage.setText(text)
-        self._message_bar.setVisible(True)
-
-    def _dismiss_message(self):
-        self._message_bar.setVisible(False)
+        if error:
+            self._message_bar.pushError(text)
+        else:
+            self._message_bar.pushSuccess(text)

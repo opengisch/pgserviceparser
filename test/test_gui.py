@@ -273,19 +273,20 @@ class TestServiceWidget(_TempServiceFileMixin, unittest.TestCase):
         w = PGServiceParserWidget(conf_file_path=Path("/tmp/nonexistent_pgservice.conf"))
         self.assertFalse(w._content_widget.isEnabled())
 
-    def test_message_bar_hidden_initially(self):
+    def test_message_bar_present(self):
         w = self._make_widget()
-        self.assertFalse(w._message_bar.isVisible())
+        from pgserviceparser.gui.message_bar import MessageBar
 
-    def test_show_and_dismiss_message(self):
+        self.assertIsInstance(w._message_bar, MessageBar)
+
+    def test_show_message_pushes_to_bar(self):
         w = self._make_widget()
         w.show()
         w._show_message("Test error", error=True)
-        self.assertTrue(w._message_bar.isVisible())
-        self.assertIn("Test error", w._lblMessage.text())
-
-        w._dismiss_message()
-        self.assertFalse(w._message_bar.isVisible())
+        # The message bar inner layout should now contain at least one message item
+        inner_count = w._message_bar._inner_layout.count()
+        # count includes the trailing stretch, so > 1 means a message was added
+        self.assertGreater(inner_count, 1)
 
     def test_update_button_disabled_initially(self):
         w = self._make_widget()
