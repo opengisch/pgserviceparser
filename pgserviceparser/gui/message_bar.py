@@ -1,9 +1,12 @@
 """A stackable message bar widget for displaying success/warning/error messages."""
 
+import traceback
 from enum import IntEnum
 
 from .compat import QtCore, QtWidgets
 
+QDialog = QtWidgets.QDialog
+QDialogButtonBox = QtWidgets.QDialogButtonBox
 QFrame = QtWidgets.QFrame
 QHBoxLayout = QtWidgets.QHBoxLayout
 QLabel = QtWidgets.QLabel
@@ -12,10 +15,19 @@ QPropertyAnimation = QtCore.QPropertyAnimation
 QScrollArea = QtWidgets.QScrollArea
 QSizePolicy = QtWidgets.QSizePolicy
 Qt = QtCore.Qt
+QTextEdit = QtWidgets.QTextEdit
 QTimer = QtCore.QTimer
 QToolButton = QtWidgets.QToolButton
 QVBoxLayout = QtWidgets.QVBoxLayout
 QWidget = QtWidgets.QWidget
+
+try:
+    from qgis.core import Qgis
+    from qgis.gui import QgsMessageBar
+
+    HAS_QGS_MESSAGE_BAR = True
+except ImportError:
+    HAS_QGS_MESSAGE_BAR = False
 
 
 class MessageLevel(IntEnum):
@@ -82,18 +94,19 @@ _LEVEL_ICONS = {
 class _MessageItem(QFrame):
     """A single message bar entry."""
 
-    def __init__(self, text: str, level: MessageLevel, parent=None):
+    def __init__(self, text: str, level: MessageLevel, exception: Exception | None = None, parent=None):
         super().__init__(parent)
         self.setObjectName("messageItem")
         self.setFrameShape(QFrame.Shape.StyledPanel)
         self.setFrameShadow(QFrame.Shadow.Raised)
         self.setStyleSheet(_STYLE_TEMPLATES[level])
+        self._exception = exception
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 4, 8, 4)
         layout.setSpacing(2)
 
-        # --- Top row: text + close button ---
+        # --- Top row: text + buttons ---
         top_row = QHBoxLayout()
         top_row.setContentsMargins(0, 0, 0, 0)
         top_row.setSpacing(4)
@@ -102,6 +115,14 @@ class _MessageItem(QFrame):
         self._label.setWordWrap(True)
         self._label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         top_row.addWidget(self._label)
+
+        # Details button (only shown when an exception is attached)
+        if exception is not None:
+            self._details_btn = QToolButton()
+            self._details_btn.setText("Details")
+            self._details_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            self._details_btn.clicked.connect(self._show_details)
+            top_row.addWidget(self._details_btn)
 
         self._close_btn = QToolButton()
         self._close_btn.setText("\u2715")  # ✕
@@ -153,13 +174,40 @@ class _MessageItem(QFrame):
         self._anim.start()
 
     def _remove(self):
-        message_bar = self._find_message_bar()
+        message_bar = self._message_bar()
         self.setParent(None)
         self.deleteLater()
+        # Let the message bar know so it can hide itself when empty
         if message_bar is not None:
             message_bar._on_item_removed()
 
-    def _find_message_bar(self):
+    def _show_details(self):
+        """Show a dialog with the full exception traceback."""
+        if self._exception is None:
+            return
+
+        dlg = QDialog(self.window())
+        dlg.setWindowTitle("Error Details")
+        dlg.resize(700, 400)
+
+        layout = QVBoxLayout(dlg)
+
+        text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
+        text_edit.setFontFamily("monospace")
+        details = "".join(
+            traceback.format_exception(type(self._exception), self._exception, self._exception.__traceback__)
+        )
+        text_edit.setPlainText(details)
+        layout.addWidget(text_edit)
+
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        button_box.rejected.connect(dlg.close)
+        layout.addWidget(button_box)
+
+        dlg.exec()
+
+    def _message_bar(self):
         """Walk up the parent chain to find the owning MessageBar."""
         widget = self.parent()
         while widget is not None:
@@ -172,13 +220,25 @@ class _MessageItem(QFrame):
 # Maximum height the message bar can occupy before it becomes scrollable
 _MAX_BAR_HEIGHT = 50
 
+# Mapping from custom MessageLevel to Qgis.MessageLevel
+_QGIS_LEVEL_MAP = {}
+if HAS_QGS_MESSAGE_BAR:
+    _QGIS_LEVEL_MAP = {
+        MessageLevel.SUCCESS: Qgis.MessageLevel.Success,  # type: ignore[possibly-undefined]
+        MessageLevel.WARNING: Qgis.MessageLevel.Warning,  # type: ignore[possibly-undefined]
+        MessageLevel.ERROR: Qgis.MessageLevel.Critical,  # type: ignore[possibly-undefined]
+    }
+
+# Duration in seconds for QgsMessageBar auto-dismiss (0 = manual dismiss)
+_QGIS_SUCCESS_DURATION_S = 5
+
 
 class MessageBar(QWidget):
-    """A container widget that stacks message items.
+    """A container widget that stacks message items at the top of a dialog.
 
-    Place this at the top of a window or dialog to display dismissible
-    success / warning / error messages.  A fixed height is always
-    reserved so surrounding layout does not shift.
+    When running inside QGIS, delegates to ``QgsMessageBar`` for native
+    look-and-feel.  Falls back to a custom scroll-area implementation
+    otherwise (e.g. standalone mode).
     """
 
     def __init__(self, parent=None):
@@ -190,37 +250,60 @@ class MessageBar(QWidget):
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
 
-        self._scroll_area = QScrollArea()
-        self._scroll_area.setWidgetResizable(True)
-        self._scroll_area.setFrameShape(QFrame.Shape.NoFrame)
-        self._scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self._scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        outer.addWidget(self._scroll_area)
+        if HAS_QGS_MESSAGE_BAR:
+            self._qgs_bar = QgsMessageBar(self)  # type: ignore[possibly-undefined]
+            outer.addWidget(self._qgs_bar)
+            self._use_qgs = True
+        else:
+            self._qgs_bar = None
+            self._use_qgs = False
 
-        self._inner = QWidget()
-        self._inner_layout = QVBoxLayout(self._inner)
-        self._inner_layout.setContentsMargins(0, 0, 0, 0)
-        self._inner_layout.setSpacing(4)
-        self._inner_layout.addStretch()
-        self._scroll_area.setWidget(self._inner)
+            self._scroll_area = QScrollArea()
+            self._scroll_area.setWidgetResizable(True)
+            self._scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+            self._scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+            self._scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+            outer.addWidget(self._scroll_area)
+
+            self._inner = QWidget()
+            self._inner_layout = QVBoxLayout(self._inner)
+            self._inner_layout.setContentsMargins(0, 0, 0, 0)
+            self._inner_layout.setSpacing(4)
+            self._inner_layout.addStretch()
+            self._scroll_area.setWidget(self._inner)
 
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
 
-    def pushMessage(self, text: str, level: MessageLevel = MessageLevel.SUCCESS):
+    def pushMessage(
+        self,
+        text: str,
+        level: MessageLevel = MessageLevel.SUCCESS,
+        exception: Exception | None = None,
+    ):
         """Add a message to the bar.
 
         Args:
             text: The message text to display.
             level: MessageLevel.SUCCESS (auto-dismiss 5 s),
                    MessageLevel.WARNING or MessageLevel.ERROR (manual dismiss).
+            exception: Optional exception. When provided a *Details* button is
+                       shown that opens a dialog with the full traceback.
         """
-        item = _MessageItem(text, level, parent=self._inner)
-        # Insert before the stretch at the end
-        self._inner_layout.insertWidget(self._inner_layout.count() - 1, item)
-        # Scroll to bottom to reveal the newest message
-        QTimer.singleShot(0, self._scroll_to_bottom)
+        if self._use_qgs:
+            qgis_level = _QGIS_LEVEL_MAP[level]
+            duration = _QGIS_SUCCESS_DURATION_S if level == MessageLevel.SUCCESS else 0
+            msg = text
+            if exception is not None:
+                msg += f"\n{exception}"
+            self._qgs_bar.pushMessage("", msg, qgis_level, duration)
+        else:
+            item = _MessageItem(text, level, exception=exception, parent=self._inner)
+            # Insert before the stretch at the end
+            self._inner_layout.insertWidget(self._inner_layout.count() - 1, item)
+            # Scroll to bottom to reveal the newest message
+            QTimer.singleShot(0, self._scroll_to_bottom)
 
     def pushSuccess(self, text: str):
         self.pushMessage(text, MessageLevel.SUCCESS)
@@ -228,18 +311,21 @@ class MessageBar(QWidget):
     def pushWarning(self, text: str):
         self.pushMessage(text, MessageLevel.WARNING)
 
-    def pushError(self, text: str):
-        self.pushMessage(text, MessageLevel.ERROR)
+    def pushError(self, text: str, exception: Exception | None = None):
+        self.pushMessage(text, MessageLevel.ERROR, exception=exception)
 
     def clearAll(self):
         """Remove all messages immediately."""
-        for i in reversed(range(self._inner_layout.count())):
-            item = self._inner_layout.itemAt(i)
-            widget = item.widget() if item else None
-            if widget and isinstance(widget, _MessageItem):
-                self._inner_layout.removeWidget(widget)
-                widget.setParent(None)
-                widget.deleteLater()
+        if self._use_qgs:
+            self._qgs_bar.clearWidgets()
+        else:
+            for i in reversed(range(self._inner_layout.count())):
+                item = self._inner_layout.itemAt(i)
+                widget = item.widget() if item else None
+                if widget and isinstance(widget, _MessageItem):
+                    self._inner_layout.removeWidget(widget)
+                    widget.setParent(None)
+                    widget.deleteLater()
 
     # ------------------------------------------------------------------
     # Internal
@@ -247,12 +333,13 @@ class MessageBar(QWidget):
 
     def _on_item_removed(self):
         """Called when a message item removes itself."""
-        pass  # Fixed height — nothing to adjust
+        pass  # Nothing to do — fixed height, no layout changes
 
     def _scroll_to_bottom(self):
-        sb = self._scroll_area.verticalScrollBar()
-        if sb:
-            sb.setValue(sb.maximum())
+        if not self._use_qgs:
+            sb = self._scroll_area.verticalScrollBar()
+            if sb:
+                sb.setValue(sb.maximum())
 
     # ------------------------------------------------------------------
     # Static helper to find a MessageBar from any child widget
@@ -262,13 +349,18 @@ class MessageBar(QWidget):
     def findMessageBar(widget):
         """Walk up the widget tree to find the nearest MessageBar.
 
+        This allows any child widget to push messages without holding a direct reference.
         Returns None if no message bar is found.
         """
+        from .service_widget import PGServiceParserWidget
+
         w = widget
         while w is not None:
             if isinstance(w, MessageBar):
                 return w
-            # Check if the parent has a messageBar() accessor
+            # Check if the parent has a messageBar() accessor or _message_bar attribute
+            if isinstance(w, PGServiceParserWidget) and hasattr(w, "_message_bar"):
+                return w._message_bar
             parent = w.parent()
             if parent is not None and hasattr(parent, "messageBar"):
                 bar = parent.messageBar()
@@ -276,3 +368,36 @@ class MessageBar(QWidget):
                     return bar
             w = parent
         return None
+
+    # ------------------------------------------------------------------
+    # Static convenience helpers for child widgets
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def pushErrorToBar(widget, text: str, exception=None):
+        """Push an error message from any child widget to the message bar.
+
+        If *exception* is not None its string representation is appended to
+        the visible text and a *Details* button is added to view the full
+        traceback.
+        """
+        bar = MessageBar.findMessageBar(widget)
+        if bar:
+            msg = text
+            if exception is not None:
+                msg += f"\n{exception}"
+            bar.pushError(msg, exception=exception)
+
+    @staticmethod
+    def pushWarningToBar(widget, text: str):
+        """Push a warning message from any child widget to the message bar."""
+        bar = MessageBar.findMessageBar(widget)
+        if bar:
+            bar.pushWarning(text)
+
+    @staticmethod
+    def pushSuccessToBar(widget, text: str):
+        """Push a success message from any child widget to the message bar."""
+        bar = MessageBar.findMessageBar(widget)
+        if bar:
+            bar.pushSuccess(text)
