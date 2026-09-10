@@ -144,14 +144,14 @@ class TestServiceConfigModel(unittest.TestCase):
         self.assertEqual(m.data(idx, QtCore.Qt.ItemDataRole.DisplayRole), "localhost")
 
     def test_password_masked_in_display(self):
-        m = self._make_model(config={"password": "secret"})
+        m = self._make_model(config={"password": "secret"})  # nosec B105
         idx = m.index(0, 1)
         display = m.data(idx, QtCore.Qt.ItemDataRole.DisplayRole)
         self.assertNotEqual(display, "secret")
         self.assertEqual(display, "************")
 
     def test_password_visible_in_edit_role(self):
-        m = self._make_model(config={"password": "secret"})
+        m = self._make_model(config={"password": "secret"})  # nosec B105
         idx = m.index(0, 1)
         self.assertEqual(m.data(idx, QtCore.Qt.ItemDataRole.EditRole), "secret")
 
