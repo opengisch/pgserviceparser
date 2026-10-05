@@ -5,7 +5,7 @@ otherwise falls back to ``PyQt6``.
 """
 
 try:
-    from qgis.PyQt import QtCore, QtGui, QtWidgets  # noqa: F401
+    from qgis.PyQt import QtCore, QtGui, QtWidgets
 
     _QGIS = True
 except ImportError:
