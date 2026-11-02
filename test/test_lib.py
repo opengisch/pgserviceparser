@@ -301,7 +301,13 @@ class TestLib(unittest.TestCase):
         self.assertEqual(disabled_service_names(), ["service_2"])
         self.assertEqual(
             disabled_service_config("service_2"),
-            {"host": "host_2", "dbname": "db_2", "port": "2222", "user": "user_2", "password": "pwd_2"},
+            {
+                "host": "host_2",
+                "dbname": "db_2",
+                "port": "2222",
+                "user": "user_2",
+                "password": "pwd_2",  # nosec B105
+            },
         )
         self.assertIn(
             "pwd_1\n\n#[service_2]\n#host=host_2\n#dbname=db_2\n#port=2222\n#user=user_2\n#password=pwd_2\n\n[service_3]",
