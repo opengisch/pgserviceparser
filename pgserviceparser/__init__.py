@@ -3,6 +3,7 @@ import configparser
 import io
 import platform
 import stat
+from enum import Enum
 from os import getenv
 from pathlib import Path
 from typing import Optional
@@ -61,8 +62,34 @@ def _when_read_only_try_to_add_write_permission(func):
     return wrapper
 
 
+class ConfPathSource(Enum):
+    """How the path returned by `conf_path` is determined."""
+
+    PGSERVICEFILE = "PGSERVICEFILE"
+    """Set by the PGSERVICEFILE environment variable."""
+    PGSYSCONFDIR = "PGSYSCONFDIR"
+    """pg_service.conf in the directory set by the PGSYSCONFDIR environment variable."""
+    DEFAULT = "DEFAULT"
+    """Default location of the platform."""
+
+
+def conf_path_source() -> ConfPathSource:
+    """Returns how the path returned by `conf_path` is determined.
+
+    Returns:
+        the source of the pg_service.conf path
+    """
+    if getenv("PGSERVICEFILE"):
+        return ConfPathSource.PGSERVICEFILE
+    if getenv("PGSYSCONFDIR"):
+        return ConfPathSource.PGSYSCONFDIR
+    return ConfPathSource.DEFAULT
+
+
 def conf_path(create_if_missing: bool | None = False) -> Path:
     """Returns the path found for the pg_service.conf on the system as string.
+
+    Use `conf_path_source` to know how this path is determined.
 
     Args:
         create_if_missing: Whether to create the file (and eventually its parent folders) if the file does not exist.
@@ -71,9 +98,10 @@ def conf_path(create_if_missing: bool | None = False) -> Path:
         path to the pg_service.conf file as string
     """
     pg_config_path = None
-    if getenv("PGSERVICEFILE"):
+    source = conf_path_source()
+    if source == ConfPathSource.PGSERVICEFILE:
         pg_config_path = Path(getenv("PGSERVICEFILE"))
-    elif getenv("PGSYSCONFDIR"):
+    elif source == ConfPathSource.PGSYSCONFDIR:
         pg_config_path = Path(getenv("PGSYSCONFDIR")) / "pg_service.conf"
     else:
         if platform.system() == "Windows":

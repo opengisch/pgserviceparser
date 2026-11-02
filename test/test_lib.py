@@ -21,7 +21,9 @@ import unittest
 from pathlib import Path
 
 from pgserviceparser import (
+    ConfPathSource,
     conf_path,
+    conf_path_source,
     copy_service_settings,
     create_service,
     full_config,
@@ -48,6 +50,27 @@ class TestLib(unittest.TestCase):
 
     def test_conf_path(self):
         self.assertEqual(Path(os.environ["PGSERVICEFILE"]), conf_path())
+
+    def test_conf_path_source(self):
+        pgservicefile = os.environ.pop("PGSERVICEFILE")
+        pgsysconfdir = os.environ.pop("PGSYSCONFDIR", None)
+        try:
+            self.assertEqual(conf_path_source(), ConfPathSource.DEFAULT)
+
+            os.environ["PGSYSCONFDIR"] = str(self.service_file_path.parent)
+            self.assertEqual(conf_path_source(), ConfPathSource.PGSYSCONFDIR)
+            self.assertEqual(conf_path(), self.service_file_path.parent / "pg_service.conf")
+
+            # PGSERVICEFILE takes precedence over PGSYSCONFDIR
+            os.environ["PGSERVICEFILE"] = pgservicefile
+            self.assertEqual(conf_path_source(), ConfPathSource.PGSERVICEFILE)
+            self.assertEqual(conf_path(), Path(pgservicefile))
+        finally:
+            os.environ["PGSERVICEFILE"] = pgservicefile
+            if pgsysconfdir is None:
+                os.environ.pop("PGSYSCONFDIR", None)
+            else:
+                os.environ["PGSYSCONFDIR"] = pgsysconfdir
 
     def test_full_config(self):
         self.assertIsNotNone(full_config())
