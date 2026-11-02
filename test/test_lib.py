@@ -79,7 +79,14 @@ class TestLib(unittest.TestCase):
 
         conf = service_config("service_1")
         self.assertEqual(
-            conf, {"host": "host_1", "dbname": "db_1", "port": "1111", "user": "user_1", "password": "pwd_1"}
+            conf,
+            {
+                "host": "host_1",
+                "dbname": "db_1",
+                "port": "1111",
+                "user": "user_1",
+                "password": "pwd_1",  # nosec B105
+            },
         )
 
     def test_write_service_setting(self):
@@ -114,7 +121,14 @@ class TestLib(unittest.TestCase):
         # Overwrite the whole service_3 config using service_2 params
         config_3 = service_config("service_3")
         self.assertEqual(
-            config_3, {"host": "host_3", "dbname": "db_3", "port": "3333", "user": "user_3", "password": "pwd_3"}
+            config_3,
+            {
+                "host": "host_3",
+                "dbname": "db_3",
+                "port": "3333",
+                "user": "user_3",
+                "password": "pwd_3",  # nosec B105
+            },
         )
         config_2 = service_config("service_2")
         write_service("service_3", config_2)
@@ -127,7 +141,13 @@ class TestLib(unittest.TestCase):
         )
 
         # add new service
-        new_srv_settings = {"host": "host_4", "dbname": "db_4", "port": 4444, "user": "user_4", "password": "pwd_4"}
+        new_srv_settings = {
+            "host": "host_4",
+            "dbname": "db_4",
+            "port": 4444,
+            "user": "user_4",
+            "password": "pwd_4",  # nosec B105
+        }
         new_srv = write_service(service_name="service_4", settings=new_srv_settings, create_if_not_found=True)
         self.assertIsInstance(new_srv, dict)
         self.assertIn("service_4", service_names())
