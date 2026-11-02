@@ -15,6 +15,15 @@ Returns the path found for the pg_service.conf on the system as string.
 '/home/dave/.pg_service.conf'
 ```
 
+## Knowing how the service file path is determined with `conf_path_source`
+
+Returns whether the path comes from the `PGSERVICEFILE` or `PGSYSCONFDIR` environment variable, or is the platform default.
+
+```python
+>>> pgserviceparser.conf_path_source()
+<ConfPathSource.DEFAULT: 'DEFAULT'>
+```
+
 ## Listing all the services with `service_names`
 
 Returns all service names in a list.
@@ -71,6 +80,33 @@ To remove it:
 
 ```python
 pgserviceparser.remove_service("gis_prod_ro")
+```
+
+## Disable a service and restore it
+
+A service can be disabled by commenting it out, the rest of the file is left untouched:
+
+```python
+pgserviceparser.disable_service("gis_prod_ro")
+```
+
+```ini
+#[gis_prod_ro]
+#host=localhost
+#dbname=best_database_ever
+#port=5432
+#user=ro_gis_user
+```
+
+Disabled services are kept when the service file is written. To list them, get their settings and restore them:
+
+```python
+>>> pgserviceparser.disabled_service_names()
+['gis_prod_ro']
+>>> pgserviceparser.disabled_service_config("gis_prod_ro")
+{'host': 'localhost', 'dbname': 'best_database_ever', 'port': '5432', 'user': 'ro_gis_user'}
+>>> pgserviceparser.enable_service("gis_prod_ro")
+True
 ```
 
 ----
