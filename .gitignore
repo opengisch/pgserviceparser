@@ -9,4 +9,5 @@ __pycache__/
 *$py.class
 *.pyc
 .venv
+.python-version
 dist/

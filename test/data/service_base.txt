@@ -18,3 +18,11 @@ dbname=db_3
 port=3333
 user=user_3
 password=pwd_3
+
+[service_4]
+host=my-project-db-65b82f87-f737-4d69-8cf4-1dd7cd8.withoutclouds.com
+dbname=db_4 # My comment
+port=4444
+user=user_4
+password=pwd_%4 # Test for issue #46
+sslkey=/home/s.key
