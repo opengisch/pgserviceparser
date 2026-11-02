@@ -49,6 +49,7 @@ Optionally you can pass a config file path. Otherwise it gets it by `conf_path`.
 
 Returns full pgservice config as [configparser.ConfigParser()](https://docs.python.org/3/library/configparser.html).
 Optionally you can pass a config file path. Otherwise it gets it by `conf_path`.
+Like libpq, if a service or a setting within a service is duplicated, only the first occurrence is used.
 
 ```python
 >>> pgserviceparser.full_config()

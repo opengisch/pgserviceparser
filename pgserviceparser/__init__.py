@@ -4,6 +4,7 @@ import io
 import platform
 import re
 import stat
+from collections.abc import Iterable, Iterator
 from enum import Enum
 from os import getenv
 from pathlib import Path
@@ -126,8 +127,45 @@ def conf_path(create_if_missing: bool | None = False) -> Path:
     return pg_config_path
 
 
+def _skip_duplicates(lines: Iterable[str]) -> Iterator[str]:
+    """Skips the duplicated services and settings of a service file.
+
+    Like libpq, only the first occurrence of a service and the first occurrence
+    of a setting within a service are kept.
+
+    Args:
+        lines: lines of the service file
+
+    Yields:
+        lines of the service file without the duplicates
+    """
+    services = set()
+    settings = set()
+    skip_service = False
+    for line in lines:
+        stripped = line.strip()
+        if header := configparser.ConfigParser.SECTCRE.match(stripped):
+            service = header.group("header")
+            skip_service = service in services
+            services.add(service)
+            settings = set()
+        elif skip_service:
+            continue
+        elif not stripped.startswith(("#", ";")) and (option := configparser.ConfigParser.OPTCRE.match(stripped)):
+            setting = option.group("option").lower()
+            if setting in settings:
+                continue
+            settings.add(setting)
+
+        if not skip_service:
+            yield line
+
+
 def full_config(conf_file_path: Path | None = None) -> configparser.ConfigParser:
     """Returns full pgservice config as configparser.ConfigParser().
+
+    Like libpq, if a service or a setting within a service is duplicated, only the
+    first occurrence is used. The other occurrences are removed when writing the file.
 
     Args:
         conf_file_path: path to configuration file to load. If None the `conf_path` is used, defaults to None
@@ -147,7 +185,8 @@ def full_config(conf_file_path: Path | None = None) -> configparser.ConfigParser
         raise ServiceFileNotFound(pg_service_filepath=conf_file_path)
 
     config = configparser.ConfigParser(interpolation=None)
-    config.read(conf_file_path)
+    with open(conf_file_path) as f:
+        config.read_file(_skip_duplicates(f), source=str(conf_file_path))
     return config
 
 

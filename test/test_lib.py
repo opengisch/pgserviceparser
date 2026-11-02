@@ -82,6 +82,31 @@ class TestLib(unittest.TestCase):
 
         self.assertRaises(ServiceFileNotFound, full_config, "non_existing_file")
 
+    def test_duplicates(self):
+        # Like libpq, only the first occurrence of a service and of a setting is used
+        self.service_file_path.write_text(
+            "[service_1]\n"
+            "host=host_1\n"
+            "port=1111\n"
+            "host=duplicated_setting\n"
+            "\n"
+            "[service_2]\n"
+            "host=host_2\n"
+            "\n"
+            "[service_1]\n"
+            "host=duplicated_service\n"
+            "dbname=duplicated_service\n"
+        )
+        self.assertEqual(service_names(), ["service_1", "service_2"])
+        self.assertEqual(service_config("service_1"), {"host": "host_1", "port": "1111"})
+
+        # The ignored duplicates are removed when writing
+        write_service_setting("service_2", "port", "2222")
+        self.assertEqual(
+            self.service_file_path.read_text(),
+            "[service_1]\nhost=host_1\nport=1111\n\n[service_2]\nhost=host_2\nport=2222\n\n",
+        )
+
     def test_service_names(self):
         self.assertEqual(service_names(), ["service_1", "service_2", "service_3", "service_4"])
 
