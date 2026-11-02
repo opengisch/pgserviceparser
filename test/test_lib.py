@@ -26,6 +26,10 @@ from pgserviceparser import (
     conf_path_source,
     copy_service_settings,
     create_service,
+    disable_service,
+    disabled_service_config,
+    disabled_service_names,
+    enable_service,
     full_config,
     remove_service,
     rename_service,
@@ -287,6 +291,105 @@ class TestLib(unittest.TestCase):
         self.assertIsInstance(new_srv, dict)
         self.assertIn("service_tmp", service_names())
         remove_service("service_tmp")
+
+    def test_disable_service(self):
+        with self.assertRaises(ServiceNotFound):
+            disable_service("non_existing_service")
+
+        disable_service("service_2")
+        self.assertEqual(service_names(), ["service_1", "service_3", "service_4"])
+        self.assertEqual(disabled_service_names(), ["service_2"])
+        self.assertEqual(
+            disabled_service_config("service_2"),
+            {"host": "host_2", "dbname": "db_2", "port": "2222", "user": "user_2", "password": "pwd_2"},
+        )
+        self.assertIn(
+            "pwd_1\n\n#[service_2]\n#host=host_2\n#dbname=db_2\n#port=2222\n#user=user_2\n#password=pwd_2\n\n[service_3]",
+            self.service_file_path.read_text(),
+        )
+
+        with self.assertRaises(ServiceNotFound):
+            disabled_service_config("service_1")
+
+    def test_disable_service_with_comments(self):
+        text = (
+            "[service_1]\n"
+            "host=host_1\n"
+            "\n"
+            "# comment in service_1\n"
+            "port=1111\n"
+            "\n"
+            "# comment for service_2\n"
+            "[service_2]\n"
+            "host=host_2\n"
+        )
+        self.service_file_path.write_text(text)
+
+        # The trailing empty line and comment are left to service_2
+        disable_service("service_1")
+        self.assertEqual(
+            self.service_file_path.read_text(),
+            "#[service_1]\n"
+            "#host=host_1\n"
+            "#\n"
+            "## comment in service_1\n"
+            "#port=1111\n"
+            "\n"
+            "# comment for service_2\n"
+            "[service_2]\n"
+            "host=host_2\n",
+        )
+        self.assertEqual(disabled_service_config("service_1"), {"host": "host_1", "port": "1111"})
+
+        self.assertTrue(enable_service("service_1"))
+        self.assertEqual(self.service_file_path.read_text(), text)
+
+    def test_enable_service(self):
+        original = self.service_file_path.read_text()
+
+        with self.assertRaises(ServiceNotFound):
+            enable_service("service_1")
+
+        disable_service("service_2")
+        self.assertTrue(enable_service("service_2"))
+        self.assertEqual(self.service_file_path.read_text(), original)
+        self.assertEqual(disabled_service_names(), [])
+
+        # A disabled service is not enabled over an existing service with the same name
+        disable_service("service_2")
+        create_service("service_2", {"host": "new_host"})
+        self.assertFalse(enable_service("service_2"))
+        self.assertEqual(service_config("service_2"), {"host": "new_host"})
+        self.assertEqual(disabled_service_names(), ["service_2"])
+
+    def test_write_keeps_disabled_services(self):
+        disable_service("service_2")
+        write_service_setting("service_1", "port", "1")
+        remove_service("service_3")
+
+        self.assertEqual(disabled_service_names(), ["service_2"])
+        self.assertTrue(enable_service("service_2"))
+        self.assertEqual(service_names(), ["service_1", "service_4", "service_2"])
+        self.assertEqual(service_config("service_2")["host"], "host_2")
+
+    def test_disabled_services_commented_out_by_hand(self):
+        self.service_file_path.write_text(
+            "# My services\n"
+            "[service_1]\n"
+            "host=host_1\n"
+            "\n"
+            "# [service_2]\n"
+            "# host=host_2\n"
+            "# This comment is not a setting\n"
+            "#[service_3]\n"
+            "#host=host_3\n"
+        )
+        self.assertEqual(disabled_service_names(), ["service_2", "service_3"])
+
+        self.assertTrue(enable_service("service_2"))
+        self.assertEqual(service_names(), ["service_1", "service_2"])
+        self.assertEqual(service_config("service_2"), {"host": "host_2"})
+        self.assertEqual(disabled_service_names(), ["service_3"])
 
     def test_write_on_read_only_file(self):
         # Make the service file read-only

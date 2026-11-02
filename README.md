@@ -82,6 +82,33 @@ To remove it:
 pgserviceparser.remove_service("gis_prod_ro")
 ```
 
+## Disable a service and restore it
+
+A service can be disabled by commenting it out, the rest of the file is left untouched:
+
+```python
+pgserviceparser.disable_service("gis_prod_ro")
+```
+
+```ini
+#[gis_prod_ro]
+#host=localhost
+#dbname=best_database_ever
+#port=5432
+#user=ro_gis_user
+```
+
+Disabled services are kept when the service file is written. To list them, get their settings and restore them:
+
+```python
+>>> pgserviceparser.disabled_service_names()
+['gis_prod_ro']
+>>> pgserviceparser.disabled_service_config("gis_prod_ro")
+{'host': 'localhost', 'dbname': 'best_database_ever', 'port': '5432', 'user': 'ro_gis_user'}
+>>> pgserviceparser.enable_service("gis_prod_ro")
+True
+```
+
 ----
 
 ## Contribute

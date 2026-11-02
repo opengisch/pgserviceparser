@@ -2,6 +2,7 @@
 import configparser
 import io
 import platform
+import re
 import stat
 from enum import Enum
 from os import getenv
@@ -15,6 +16,11 @@ try:
     from .gui import PGServiceParserWidget  # noqa: F401
 except ImportError:
     pass
+
+# Header of a disabled (commented out) service, e.g. "#[my_service]"
+_DISABLED_SERVICE_HEADER = re.compile(r"#\s*\[(?P<header>[^]]+)\]")
+# Following lines of a disabled service: empty, comment or setting
+_DISABLED_SERVICE_LINE = re.compile(r"#(\s*|[#;].*|\s*\w+\s*=.*)")
 
 
 def _make_file_writable(path: Path):
@@ -145,6 +151,65 @@ def full_config(conf_file_path: Path | None = None) -> configparser.ConfigParser
     return config
 
 
+def _read_lines(conf_file_path: Path) -> list[str]:
+    """Returns the lines of the service file.
+
+    Raises:
+        ServiceFileNotFound: when the service file is not found
+    """
+    if not conf_file_path.exists():
+        raise ServiceFileNotFound(pg_service_filepath=conf_file_path)
+
+    return conf_file_path.read_text().splitlines(keepends=True)
+
+
+def _disabled_service_ranges(lines: list[str]) -> list[tuple[str, int, int]]:
+    """Returns the name and the line range of the disabled services.
+
+    A disabled service is a commented out header (e.g. ``#[my_service]``),
+    followed by commented out settings, comments and empty lines.
+    """
+    ranges = []
+    for start, line in enumerate(lines):
+        if header := _DISABLED_SERVICE_HEADER.fullmatch(line.strip()):
+            end = start + 1
+            while end < len(lines) and _DISABLED_SERVICE_LINE.fullmatch(lines[end].strip()):
+                end += 1
+            ranges.append((header.group("header"), start, end))
+    return ranges
+
+
+def _disabled_service_range(lines: list[str], service_name: str, conf_file_path: Path) -> tuple[int, int]:
+    """Returns the line range of the first disabled service with the given name.
+
+    Raises:
+        ServiceNotFound: when no disabled service has this name
+    """
+    ranges = _disabled_service_ranges(lines)
+    for name, start, end in ranges:
+        if name == service_name:
+            return start, end
+
+    raise ServiceNotFound(
+        service_name=service_name,
+        existing_service_names=[name for name, _, _ in ranges],
+        pg_service_filepath=conf_file_path,
+    )
+
+
+def _uncomment(line: str) -> str:
+    return re.sub(r"#[ \t]*", "", line, count=1)
+
+
+def _write_config(config: configparser.ConfigParser, conf_file_path: Path) -> None:
+    """Writes the config to the service file, keeping the disabled services at the end."""
+    lines = Path(conf_file_path).read_text().splitlines(keepends=True)
+    disabled = ["".join(lines[start:end]).rstrip("\n") + "\n\n" for _, start, end in _disabled_service_ranges(lines)]
+    with open(conf_file_path, "w") as configfile:
+        config.write(configfile, space_around_delimiters=False)
+        configfile.writelines(disabled)
+
+
 @_when_read_only_try_to_add_write_permission
 def remove_service(service_name: str, conf_file_path: Path | None = None) -> None:
     """Remove a complete service from the service file.
@@ -168,8 +233,7 @@ def remove_service(service_name: str, conf_file_path: Path | None = None) -> Non
         )
 
     config.remove_section(service_name)
-    with open(conf_file_path or conf_path(), "w") as configfile:
-        config.write(configfile, space_around_delimiters=False)
+    _write_config(config, conf_file_path or conf_path())
 
 
 @_when_read_only_try_to_add_write_permission
@@ -201,8 +265,7 @@ def rename_service(old_name: str, new_name: str, conf_file_path: Path | None = N
     settings = dict(config[old_name])
     config.remove_section(old_name)
     config[new_name] = settings
-    with open(conf_file_path or conf_path(), "w") as configfile:
-        config.write(configfile, space_around_delimiters=False)
+    _write_config(config, conf_file_path or conf_path())
 
 
 @_when_read_only_try_to_add_write_permission
@@ -229,8 +292,7 @@ def create_service(service_name: str, settings: dict, conf_file_path: Path | Non
         return False
 
     config[service_name] = settings.copy()
-    with open(conf_file_path or conf_path(), "w") as configfile:
-        config.write(configfile, space_around_delimiters=False)
+    _write_config(config, conf_file_path or conf_path())
 
     return True
 
@@ -269,8 +331,7 @@ def copy_service_settings(
 
     settings = dict(config[source_service_name])
     config[target_service_name] = settings
-    with open(conf_file_path or conf_path(), "w") as configfile:
-        config.write(configfile, space_around_delimiters=False)
+    _write_config(config, conf_file_path or conf_path())
 
     return True
 
@@ -330,8 +391,7 @@ def write_service_setting(
         )
 
     config[service_name][setting_key] = setting_value
-    with open(conf_file_path or conf_path(), "w") as configfile:
-        config.write(configfile, space_around_delimiters=False)
+    _write_config(config, conf_file_path or conf_path())
 
 
 @_when_read_only_try_to_add_write_permission
@@ -367,8 +427,7 @@ def write_service(
         )
 
     config[service_name] = settings.copy()
-    with open(conf_file_path or conf_path(), "w") as configfile:
-        config.write(configfile, space_around_delimiters=False)
+    _write_config(config, conf_file_path or conf_path())
 
     return dict(config[service_name])
 
@@ -412,3 +471,120 @@ def service_names(conf_file_path: Path | None = None, sorted_alphabetically: boo
     config = full_config(conf_file_path)
     names = config.sections()
     return sorted(names, key=str.lower) if sorted_alphabetically else names
+
+
+@_when_read_only_try_to_add_write_permission
+def disable_service(service_name: str, conf_file_path: Path | None = None) -> None:
+    """Disables a service by commenting it out in the service file.
+
+    The rest of the file is left untouched. The disabled service is kept when
+    the service file is written and can be restored with `enable_service`.
+
+    Args:
+        service_name: service name
+        conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used,
+            defaults to None
+
+    Raises:
+        ServiceFileNotFound: when the service file is not found
+        ServiceNotFound: when the service is not found
+        PermissionError: when the service file is read-only
+    """
+    conf_file_path = Path(conf_file_path or conf_path())
+    names = service_names(conf_file_path)
+    if service_name not in names:
+        raise ServiceNotFound(
+            service_name=service_name,
+            existing_service_names=names,
+            pg_service_filepath=conf_file_path,
+        )
+
+    lines = _read_lines(conf_file_path)
+    headers = [
+        (i, header.group("header"))
+        for i, line in enumerate(lines)
+        if (header := configparser.ConfigParser.SECTCRE.match(line.strip()))
+    ]
+    ends = [i for i, _ in headers[1:]] + [len(lines)]
+    for (start, name), end in zip(headers, ends):
+        if name != service_name:
+            continue
+        # Leave the trailing empty lines and comments to the next service
+        while not lines[end - 1].strip() or lines[end - 1].lstrip().startswith(("#", ";")):
+            end -= 1
+        for i in range(start, end):
+            lines[i] = f"#{lines[i]}"
+
+    conf_file_path.write_text("".join(lines))
+
+
+@_when_read_only_try_to_add_write_permission
+def enable_service(service_name: str, conf_file_path: Path | None = None) -> bool:
+    """Enables a disabled service by uncommenting it in the service file.
+
+    If several disabled services have the same name, the first one is enabled.
+    If a service with the same name already exists, nothing is changed and False is returned.
+
+    Args:
+        service_name: service name
+        conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used,
+            defaults to None
+
+    Returns:
+        True if the service was enabled, False if a service with the same name already exists
+
+    Raises:
+        ServiceFileNotFound: when the service file is not found
+        ServiceNotFound: when no disabled service has this name
+        PermissionError: when the service file is read-only
+    """
+    conf_file_path = Path(conf_file_path or conf_path())
+    lines = _read_lines(conf_file_path)
+    start, end = _disabled_service_range(lines, service_name, conf_file_path)
+    if service_name in service_names(conf_file_path):
+        return False
+
+    lines[start:end] = [_uncomment(line) for line in lines[start:end]]
+    conf_file_path.write_text("".join(lines))
+    return True
+
+
+def disabled_service_names(conf_file_path: Path | None = None) -> list[str]:
+    """Returns the names of the disabled services in a list.
+
+    Args:
+        conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used, defaults to None
+
+    Returns:
+        list of every disabled service
+
+    Raises:
+        ServiceFileNotFound: when the service file is not found
+    """
+    lines = _read_lines(Path(conf_file_path or conf_path()))
+    return list(dict.fromkeys(name for name, _, _ in _disabled_service_ranges(lines)))
+
+
+def disabled_service_config(service_name: str, conf_file_path: Path | None = None) -> dict:
+    """Returns the config of a disabled service as a dict.
+
+    If several disabled services have the same name, the first one is used.
+
+    Args:
+        service_name: service name
+        conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used, defaults to None
+
+    Returns:
+        service settings as dictionary
+
+    Raises:
+        ServiceFileNotFound: when the service file is not found
+        ServiceNotFound: when no disabled service has this name
+    """
+    conf_file_path = Path(conf_file_path or conf_path())
+    lines = _read_lines(conf_file_path)
+    start, end = _disabled_service_range(lines, service_name, conf_file_path)
+
+    config = configparser.ConfigParser(interpolation=None)
+    config.read_string("".join(_uncomment(line) for line in lines[start:end]))
+    return dict(config[service_name])
