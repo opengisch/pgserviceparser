@@ -25,7 +25,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from pgserviceparser.gui.compat import QtCore, QtGui, QtWidgets  # noqa: E402
+from pgserviceparser.gui.compat import QtCore, QtGui, QtWidgets
 
 QApplication = QtWidgets.QApplication
 QIcon = QtGui.QIcon
@@ -36,7 +36,7 @@ QPen = QtGui.QPen
 QPoint = QtCore.QPoint
 Qt = QtCore.Qt
 
-from pgserviceparser.gui.main_window import _MainWindow  # noqa: E402
+from pgserviceparser.gui.main_window import _MainWindow
 
 # ---------------------------------------------------------------------------
 # Configuration

@@ -403,7 +403,7 @@ class MessageBar(QWidget):
 
     def _on_item_removed(self):
         """Called when a message item removes itself."""
-        pass  # Nothing to do — fixed height, no layout changes
+        # Nothing to do — fixed height, no layout changes
 
     def _scroll_to_bottom(self):
         if not self._use_qgs:
